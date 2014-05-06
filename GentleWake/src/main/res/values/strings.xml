@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">GentleWake</string>
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="pref_bridge_config">Connection to Hue Bridge</string>
+    <string name="pref_ip_address">IP Address</string>
+    <string name="pref_ip_address_summary">The IP address of your Hue Bridge</string>
+
+    <!-- quickstart app -->
+    <string name="no_bridge">No Bridge Found.   Start Bridge Search</string>
+    <string name="btn_refresh">Refresh</string>
+    <string name="btn_find_bridge">Find new bridge</string>
+    <string name="btn_sync">Sync Alarm</string>
+    <string name="search_progress">Searching ...</string>
+    <string name="connecting">Connecting ...</string>
+    <string name="btn_ok">Ok</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="txt_could_not_connect">No connection</string>
+    <string name="txt_info_homescreen">Click "Sync Alarm" to configure Hue to adapt to your alarm clock.</string>
+    <string name="could_not_find_bridge">Hue cannot find your bridge. Please check that it is connected to the same Wi-Fi router as your app and press</string>
+    <string name="btn_more">More</string>
+    <string name="btn_reconnect">Reconnect</string>
+    <string name="enter_light_name">Enter light name</string>
+    <string name="txt_sdk_version">SDK Version</string>
+    <string name="menu_find_bridge">Find new Bridge</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="btn_retry">Retry</string>
+    <string name="searching_for_bridges">Searching for Bridges</string>
+    <string name="txt_selectbridges">Available Access Points</string>
+    <string name="txt_pushlink">Pushlink</string>
+    <string name="press_pushlink_button">Press the link button on the bridge</string>
+    <string name="txt_select_smartbridge">Please select a bridge to use for this app</string>
+    <string name="title_error">Error</string>
+    <string name="txt_last_heartbeat">Last Heartbeat : </string>
+
+    <string name="txt_not_set">Not Set</string>
+
+    <!-- background activity that synchronizes the alarms -->
+    <string name="service_sync_alarm">Alarm Synchronization Service</string>
+
+    <!-- schedule sync -->
+    <string name="schedule_description">This schedule is used by the Gentlewake application.</string>
+
+</resources>
