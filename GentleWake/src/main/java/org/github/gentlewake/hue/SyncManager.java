@@ -321,7 +321,8 @@ public class SyncManager {
     private PHLightState createLightStateOn() {
         PHLightState scheduleLightState;
         scheduleLightState = new PHLightState();
-        scheduleLightState.setTransitionTime(this.mPrefs.getTransitionMinutes());
+        // the transition time is measured in 100ms, so to get from minutes to 100ms we need * 60 * 10
+        scheduleLightState.setTransitionTime(this.mPrefs.getTransitionMinutes() * 60 * 10);
         scheduleLightState.setOn(true);
         return scheduleLightState;
     }

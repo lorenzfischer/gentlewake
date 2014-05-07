@@ -1,4 +1,4 @@
-package org.github.gentlewake.quickstart;
+package org.github.gentlewake.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;

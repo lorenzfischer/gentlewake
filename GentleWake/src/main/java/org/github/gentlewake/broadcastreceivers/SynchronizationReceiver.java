@@ -10,9 +10,13 @@ import android.util.Log;
 import org.github.gentlewake.services.AlarmSynchronizationService;
 
 /**
+ * This BroadcastReceiver listens for events that should trigger the synchronization of the Hue schedule with the
+ * alarm clock. Currently this is when either the WiFi is freshly connected (when returning home) or when the
+ * alarm clock gets set to a new value.
+ *
  * @author lorenz.fischer@gmail.com
  */
-public class AlarmSynchronizer extends BroadcastReceiver {
+public class SynchronizationReceiver extends BroadcastReceiver {
 
     private static final String TAG = "GentleWake";
 

@@ -43,6 +43,10 @@ public class AlarmSynchronizationService extends Service {
     }
 
     @Override
+    public void onDestroy() {
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, final int startId) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "starting sync service");
@@ -50,7 +54,10 @@ public class AlarmSynchronizationService extends Service {
 
         final Context context = this;
 
-        // do the synching in a background activity
+        /*
+         * do the syncing in a background activity, as this method is run on the main thread.
+         * See http://developer.android.com/reference/android/app/Service.html
+         */
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {

@@ -1,4 +1,4 @@
-package org.github.gentlewake.quickstart;
+package org.github.gentlewake.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -26,16 +26,15 @@ import org.github.gentlewake.util.ValueCallback;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
- * MyApplicationActivity - The starting point for creating your own Hue App.
+ * MainApplicationActivity - The starting point for creating your own Hue App.
  * Currently contains a simple view with a button to change your lights to random colours.  Remove this and add your own app implementation here! Have fun!
  *
  * @author SteveyO
  */
-public class MyApplicationActivity extends Activity {
+public class MainApplicationActivity extends Activity {
 
     private static final String TAG = "GentleWake";
 

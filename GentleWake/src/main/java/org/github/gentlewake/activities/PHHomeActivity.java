@@ -1,4 +1,4 @@
-package org.github.gentlewake.quickstart;
+package org.github.gentlewake.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -25,7 +25,6 @@ import org.github.gentlewake.data.AccessPointListAdapter;
 import org.github.gentlewake.data.ApplicationPreferences;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * PHHomeActivity - The starting point in your own Hue App.
@@ -34,7 +33,7 @@ import java.util.UUID;
  * The last connected Bridge IP Address and Username are stored in SharedPreferences.
  * 
  * For subsequent usage the app automatically connects to the last connected bridge.
- * When connected the MyApplicationActivity Activity is started.  This is where you should start implementing your Hue App!  Have fun!
+ * When connected the MainApplicationActivity Activity is started.  This is where you should start implementing your Hue App!  Have fun!
  * 
  * For explanation on key concepts visit: https://github.com/PhilipsHue/PhilipsHueSDK-Java-MultiPlatform-Android
  * 
@@ -269,7 +268,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
     
     // Starting the main activity this way, prevents the PushLink Activity being shown when pressing the back button.
     public void startMainActivity() {   
-        Intent intent = new Intent(getApplicationContext(), MyApplicationActivity.class);
+        Intent intent = new Intent(getApplicationContext(), MainApplicationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
