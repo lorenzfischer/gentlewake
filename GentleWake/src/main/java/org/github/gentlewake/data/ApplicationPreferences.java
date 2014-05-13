@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Build;
+import android.provider.Settings;
 
 import com.philips.lighting.hue.sdk.connection.impl.PHBridgeInternal;
 
@@ -24,6 +25,7 @@ public class ApplicationPreferences {
     private static final String LIGHT_GROUP_NAME = "LightGroupName";
     private static final String BASE_SCHEDULE_NAME = "BaseScheduleName";
     private static final String SCHEDULE_ID_ON = "ScheduleIdOn";
+    private static final String SCHEDULE_ID_BRIGHTEN = "ScheduleIdBrighten";
     private static final String SCHEDULE_ID_OFF = "ScheduleIdOff";
     private static final String TRANSITION_MINUTES = "TransitionMinutes";
     private static ApplicationPreferences instance = null;
@@ -90,7 +92,8 @@ public class ApplicationPreferences {
 
         result = mSharedPreferences.getString(LIGHT_GROUP_NAME, null);
         if (result == null) {
-            setLightGroupName(mCtx.getString(R.string.app_name));
+            result = mCtx.getString(R.string.app_name);
+            setLightGroupName(result);
         }
 
         return result;
@@ -116,6 +119,13 @@ public class ApplicationPreferences {
     }
 
     /**
+     * @return the id that should be used for the schedule that increases the brightness of the hue lights.
+     */
+    public String getScheduleIdBrighten() {
+        return mSharedPreferences.getString(SCHEDULE_ID_BRIGHTEN, null);
+    }
+
+    /**
      * @return the id that should be used for the schedule turning the Hue lights off.
      */
     public String getScheduleIdOff() {
@@ -129,6 +139,16 @@ public class ApplicationPreferences {
      */
     public void setScheduleIdOn(String scheduleId) {
         mSharedPreferencesEditor.putString(SCHEDULE_ID_ON, scheduleId);
+        mSharedPreferencesEditor.apply();
+    }
+
+    /**
+     * Sets the schedule id for the schedule that turns the brightness up.
+     *
+     * @param scheduleId the new schedule id to use by the app.
+     */
+    public void setScheduleIdBrighten(String scheduleId) {
+        mSharedPreferencesEditor.putString(SCHEDULE_ID_BRIGHTEN, scheduleId);
         mSharedPreferencesEditor.apply();
     }
 
@@ -172,6 +192,13 @@ public class ApplicationPreferences {
     }
 
     /**
+     * @return the name that should be used for the schedule that increases the brightness of the hue lights.
+     */
+    public String getScheduleNameBrighten() {
+        return getBaseScheduleName() + " Brighten";
+    }
+
+    /**
      * @return the name that should be used for the schedule turning the Hue lights off.
      */
     public String getScheduleNameOff() {
@@ -195,7 +222,9 @@ public class ApplicationPreferences {
      */
     public int getTransitionMinutes() {
         return mSharedPreferences.getInt(TRANSITION_MINUTES, 10);
+        //return 3;
     }
+
 
     /**
      * Sets the the number of minutes, the Hue lights should use to transition into the "on" state.
@@ -220,7 +249,9 @@ public class ApplicationPreferences {
 
         result = mSharedPreferences.getString(BRIDGE_DEVICE_NAME, null);
         if (result == null) {
-            result = mCtx.getString(R.string.app_name) + "_" + UUID.randomUUID();
+            // don't put a space or an underscore.. I don't know why, but this causes trouble when connecting.
+            result = mCtx.getString(R.string.app_name) + "-" +
+                    Settings.Secure.getString(mCtx.getContentResolver(), Settings.Secure.ANDROID_ID);
             setBridgeDeviceName(result);
         }
 

@@ -132,9 +132,6 @@ public class MainApplicationActivity extends Activity {
 
         // show current alarm and hue configuration in ui
         updateUi(this.mHueSdk.getSelectedBridge());
-
-        // sync the alarm
-        this.mSyncManager.syncAlarm(logMessageCallback);
     }
 
     /**
@@ -151,8 +148,15 @@ public class MainApplicationActivity extends Activity {
 
         schedules = this.mHueSdk.getSelectedBridge().getResourceCache().getSchedules();
         nextAlarm = AlarmUtils.getNextAlarm(this);
-        hueOn = schedules.get(this.mPrefs.getScheduleIdOn());
-        hueOff = schedules.get(this.mPrefs.getScheduleIdOff());
+        hueOn = null;
+        hueOff = null;
+
+        if (this.mPrefs.getScheduleIdOn() != null) {
+            hueOn = schedules.get(this.mPrefs.getScheduleIdOn());
+        }
+        if (this.mPrefs.getScheduleIdOff() != null) {
+            hueOff = schedules.get(this.mPrefs.getScheduleIdOff());
+        }
 
         if (nextAlarm == null) {
             ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format("Not Set"));

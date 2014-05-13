@@ -27,6 +27,15 @@ import java.util.Hashtable;
 import java.util.List;
 
 /**
+ * This class deals with setting the schedules to sync the alarm of the phone with the Hue system. In each
+ * synchronization action there are three schedules set:
+ * <ol>
+ * <li>Schedule On: This schedule turns the light on and sets it to the lowest brightness.</li>
+ * <li>Schedule Brighten: This schedule increases the brightness slowly to its maximum, so that the maximum
+ * is reached, when the alarm clock of the phone goes off.</li>
+ * <li>Schedule Off: This schedule turns the Hue lights off.</li>
+ * </ol>
+ *
  * @author lorenz.fischer@gmail.com
  */
 public class SyncManager {
@@ -42,7 +51,7 @@ public class SyncManager {
     private ApplicationPreferences mPrefs;
 
     /**
-     * @param ctx the context that can be used to retrieve resources.
+     * @param ctx    the context that can be used to retrieve resources.
      * @param bridge an object that the sync manager can use to configure the Hue bridge.
      */
     public SyncManager(Context ctx, PHBridge bridge) {
@@ -147,12 +156,13 @@ public class SyncManager {
      * <p/>
      * This method makes sure that the configured light group exist on the bridge.
      *
-     * @param messageCallback this callback will be called with a message for the user. It will contain information
-     *                        about whether Hue's schedule was synchronized with the alarm settings of this phone or
-     *                        whether Hue's schedule were left unchanged, because there was already a schedule configured
-     *                        for an earlier time.
+     * @param primaryMessageCallback   this callback will be called with a message for the user after the schedule that
+     *                                 turns the Hue lights "on" has been changed or if there is some general information
+     *                                 that is important for the user.
+     * @param secondaryMessageCallback this callback will be called with messages for the user log that are not
+     *                                 primarily important, but that may still be useful to show in a user log.
      */
-    public void syncAlarm(final ValueCallback<String> messageCallback) {
+    public void syncAlarm(final ValueCallback<String> primaryMessageCallback, final ValueCallback<String> secondaryMessageCallback) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "Syncing alarms");
         }
@@ -164,7 +174,7 @@ public class SyncManager {
                 @Override
                 public void go() {
                     // todo: should I prevent a stack overflow, here?
-                    syncAlarm(messageCallback); // self-call, but this time the group should exist
+                    syncAlarm(primaryMessageCallback); // self-call, but this time the group should exist
                 }
             });
         } else {
@@ -172,6 +182,9 @@ public class SyncManager {
             Calendar scheduleOnCalendar;
             String scheduleIdOn;
             String scheduleNameOn;
+            Calendar scheduleBrightenCalendar;
+            String scheduleIdBrighten;
+            String scheduleNameBrighten;
             Calendar scheduleOffCalendar;
             String scheduleIdOff;
             String scheduleNameOff;
@@ -185,11 +198,26 @@ public class SyncManager {
             scheduleIdOn = mPrefs.getScheduleIdOn();
             scheduleNameOn = mPrefs.getScheduleNameOn();
             createUpdateSchedule(scheduleIdOn, scheduleNameOn, lightGroupName,
-                    scheduleOnCalendar.getTime(), createLightStateOn(), messageCallback,
+                    scheduleOnCalendar.getTime(), createLightStateOn(), primaryMessageCallback,
                     new ValueCallback<PHSchedule>() {
                         @Override
                         public void go(PHSchedule createdSchedule) {
                             mPrefs.setScheduleIdOn(createdSchedule.getIdentifier());
+                        }
+                    }
+            );
+
+            scheduleBrightenCalendar = Calendar.getInstance();
+            scheduleBrightenCalendar.setTime(scheduleOnCalendar.getTime());
+            scheduleBrightenCalendar.add(Calendar.SECOND, 10); // start 10 seconds after turning the light on
+            scheduleIdBrighten = mPrefs.getScheduleIdBrighten();
+            scheduleNameBrighten = mPrefs.getScheduleNameBrighten();
+            createUpdateSchedule(scheduleIdBrighten, scheduleNameBrighten, lightGroupName,
+                    scheduleBrightenCalendar.getTime(), createLightStateBrighten(), secondaryMessageCallback,
+                    new ValueCallback<PHSchedule>() {
+                        @Override
+                        public void go(PHSchedule createdSchedule) {
+                            mPrefs.setScheduleIdBrighten(createdSchedule.getIdentifier());
                         }
                     }
             );
@@ -201,7 +229,7 @@ public class SyncManager {
             scheduleIdOff = mPrefs.getScheduleIdOff();
             scheduleNameOff = mPrefs.getScheduleNameOff();
             createUpdateSchedule(scheduleIdOff, scheduleNameOff, lightGroupName, scheduleOffCalendar.getTime(),
-                    createLightStateOff(), messageCallback,
+                    createLightStateOff(), secondaryMessageCallback,
                     new ValueCallback<PHSchedule>() {
                         @Override
                         public void go(PHSchedule createdSchedule) {
@@ -213,16 +241,30 @@ public class SyncManager {
     }
 
     /**
+     * This method sets the time for Hue to turn on the light group with the supplied name.
+     * <p/>
+     * This method makes sure that the configured light group exist on the bridge.
+     *
+     * @param messageCallback this callback will be called with a message for the user. It will contain information
+     *                        about whether Hue's schedules were synchronized with the alarm settings of this phone.
+     */
+    public void syncAlarm(final ValueCallback<String> messageCallback) {
+        // sync the alarm using the same callback for both schedules.
+        syncAlarm(messageCallback, messageCallback);
+    }
+
+    /**
      * Checks if there is a schedule with the given id configured. If yes, the method checks if the light group is set
      * correctly and sets the date and the light state on the schedule. The success/failure of the operation will
      * be communicated ot the callback.
      *
-     * @param scheduleId      the id of the schedule to find.
+     * @param scheduleId       the id of the schedule to find.
      * @param scheduleName     the name of the schedule that will be set, should the schedule be created newly.
      * @param lightGroupName   the light group that should be used.
      * @param scheduleDate     the time for the schedule to be executed at.
      * @param lightState       the light state to set on the schedule.
-     * @param messageCallback  the callback to inform about the success/failure of the operation.
+     * @param messageCallback  the callback to inform about the success/failure of the operation. If this value is
+     *                         <code>null</code> it will be ignored.
      * @param scheduleCallback in case of the schedule not existing on the bridge and a new schedule has to be created,
      *                         this method will be called with the new schedule as an argument.
      */
@@ -263,14 +305,18 @@ public class SyncManager {
                     if (Log.isLoggable(TAG, Log.DEBUG)) {
                         Log.d(TAG, msg);
                     }
-                    messageCallback.go(msg);
+
+                    if (messageCallback != null) {
+                        messageCallback.go(msg);
+                    }
+
                     scheduleCallback.go(createdSchedule);
                 }
 
                 @Override
                 public void onError(int i, String s) {
                     if (Log.isLoggable(TAG, Log.WARN)) {
-                        Log.w(TAG, "Error while creating Schedule '" + newSchedule.getName() + "'. Error code "+ i + ": " + s);
+                        Log.w(TAG, "Error while creating Schedule '" + newSchedule.getName() + "'. Error code " + i + ": " + s);
                     }
 
                     // todo: handle the case when the light group does not exist on the bridge (e.g. if it was renamed
@@ -302,7 +348,13 @@ public class SyncManager {
                 public void onSuccess() {
                     String msg = "Existing Hue schedule '" + schedule.getName() +
                             "' updated for time " + schedule.getDate();
-                    messageCallback.go(msg);
+                    if (messageCallback != null) {
+                        messageCallback.go(msg);
+                    } else {
+                        if (Log.isLoggable(TAG, Log.DEBUG)) {
+                            Log.d(TAG, msg);
+                        }
+                    }
                 }
 
                 @Override
@@ -321,9 +373,22 @@ public class SyncManager {
     private PHLightState createLightStateOn() {
         PHLightState scheduleLightState;
         scheduleLightState = new PHLightState();
-        // the transition time is measured in 100ms, so to get from minutes to 100ms we need * 60 * 10
-        scheduleLightState.setTransitionTime(this.mPrefs.getTransitionMinutes() * 60 * 10);
+        scheduleLightState.setBrightness(1);
         scheduleLightState.setOn(true);
+        return scheduleLightState;
+    }
+
+    /**
+     * @return a light state to turn the hue on.
+     */
+    private PHLightState createLightStateBrighten() {
+        PHLightState scheduleLightState;
+        scheduleLightState = new PHLightState();
+        // the transition time is measured in 100ms, so to get from minutes to 100ms we need * 60 * 10
+        // technically, this will result in the light reaching its brightest setting 10 seconds after the alarm
+        // of the phone goes off, as we will start the brighten process 10 seconds after the turn-on schedule.
+        scheduleLightState.setTransitionTime(this.mPrefs.getTransitionMinutes() * 60 * 10);
+        scheduleLightState.setBrightness(255);
         return scheduleLightState;
     }
 

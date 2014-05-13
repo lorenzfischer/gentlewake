@@ -59,7 +59,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
         
         // Set the Device Name (name of your app). This will be stored in your bridge whitelist entry.
         mHueSdk.setDeviceName(mPrefs.getBridgeDeviceName());
-        
+
         // Register the PHSDKListener to receive callbacks from the bridge.
         mHueSdk.getNotificationManager().registerSDKListener(listener);
         

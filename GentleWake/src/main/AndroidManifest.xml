@@ -3,6 +3,7 @@
 
     <!-- To communicate with the Hue-Bridge we need access to the internet -->
     <uses-permission android:name="android.permission.INTERNET"/> <!-- necessary to connect to the Hue bridge -->
+    <uses-permission android:name="android.permission.GET_TASKS"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- necessary to automatically sync alarms -->
 
     <!--<uses-sdk android:minSdkVersion="17" android:targetSdkVersion="17"/>-->

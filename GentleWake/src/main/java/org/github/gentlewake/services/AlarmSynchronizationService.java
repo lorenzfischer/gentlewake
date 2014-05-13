@@ -107,7 +107,7 @@ public class AlarmSynchronizationService extends Service {
                             });
 
                         }
-                    });
+                    }, null); // disable the off-callback
 
                     // disconnect again
                     sdk.disconnect(sdk.getSelectedBridge());
