@@ -159,7 +159,7 @@ public class MainApplicationActivity extends Activity {
         }
 
         if (nextAlarm == null) {
-            ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format("Not Set"));
+            ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText("Not Set");
         } else {
             ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format(nextAlarm));
         }
