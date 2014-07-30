@@ -43,7 +43,7 @@ import java.util.List;
 public class PHHomeActivity extends Activity implements OnItemClickListener {
 
     private PHHueSDK mHueSdk;
-    public static final String TAG = "QuickStart";
+    public static final String TAG = "GentleWake.MainActivity";
     private ApplicationPreferences mPrefs;
     private AccessPointListAdapter adapter;
     

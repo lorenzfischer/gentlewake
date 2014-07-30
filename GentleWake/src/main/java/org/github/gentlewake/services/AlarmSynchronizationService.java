@@ -33,7 +33,7 @@ public class AlarmSynchronizationService extends Service {
     /** application preferences. */
     private ApplicationPreferences mPrefs;
 
-    /** A handler used to show the toas message (in the case of a successful sync) on the UI thread. */
+    /** A handler used to show the toast message (in the case of a successful sync) on the UI thread. */
     private Handler mHandler;
 
     @Override
@@ -146,10 +146,9 @@ public class AlarmSynchronizationService extends Service {
 
         try {
             result = InetAddress.getByName(bridgeIp).isReachable(2000); // this sends a ping to the bridge
-            result = true;
         } catch (Exception e) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Exception while trying to connect to the Hue bridge.", e);
+            if (Log.isLoggable(TAG, Log.ERROR)) {
+                Log.e(TAG, "Exception while trying to connect to the Hue bridge.", e);
             }
         }
 
