@@ -192,51 +192,63 @@ public class SyncManager {
 
             nextAlarm = AlarmUtils.getNextAlarm(mCtx);
 
-            scheduleOnCalendar = Calendar.getInstance();
-            scheduleOnCalendar.setTime(nextAlarm);
-            scheduleOnCalendar.add(Calendar.MINUTE, mPrefs.getTransitionMinutes() * -1);
-            scheduleIdOn = mPrefs.getScheduleIdOn();
-            scheduleNameOn = mPrefs.getScheduleNameOn();
-            createUpdateSchedule(scheduleIdOn, scheduleNameOn, lightGroupName,
-                    scheduleOnCalendar.getTime(), createLightStateOn(), primaryMessageCallback,
-                    new ValueCallback<PHSchedule>() {
-                        @Override
-                        public void go(PHSchedule createdSchedule) {
-                            mPrefs.setScheduleIdOn(createdSchedule.getIdentifier());
-                        }
-                    }
-            );
+            if (nextAlarm != null) {
 
-            scheduleBrightenCalendar = Calendar.getInstance();
-            scheduleBrightenCalendar.setTime(scheduleOnCalendar.getTime());
-            scheduleBrightenCalendar.add(Calendar.SECOND, 10); // start 10 seconds after turning the light on
-            scheduleIdBrighten = mPrefs.getScheduleIdBrighten();
-            scheduleNameBrighten = mPrefs.getScheduleNameBrighten();
-            createUpdateSchedule(scheduleIdBrighten, scheduleNameBrighten, lightGroupName,
-                    scheduleBrightenCalendar.getTime(), createLightStateBrighten(), secondaryMessageCallback,
-                    new ValueCallback<PHSchedule>() {
-                        @Override
-                        public void go(PHSchedule createdSchedule) {
-                            mPrefs.setScheduleIdBrighten(createdSchedule.getIdentifier());
+                // the first schedule turns the light on
+                scheduleOnCalendar = Calendar.getInstance();
+                scheduleOnCalendar.setTime(nextAlarm);
+                scheduleOnCalendar.add(Calendar.MINUTE, mPrefs.getTransitionMinutes() * -1); // n mins before alarm
+                scheduleIdOn = mPrefs.getScheduleIdOn();
+                scheduleNameOn = mPrefs.getScheduleNameOn();
+                createUpdateSchedule(scheduleIdOn, scheduleNameOn, lightGroupName,
+                        scheduleOnCalendar.getTime(), createLightStateOn(), primaryMessageCallback,
+                        new ValueCallback<PHSchedule>() {
+                            @Override
+                            public void go(PHSchedule createdSchedule) {
+                                mPrefs.setScheduleIdOn(createdSchedule.getIdentifier());
+                            }
                         }
-                    }
-            );
+                );
 
-
-            scheduleOffCalendar = Calendar.getInstance();
-            scheduleOffCalendar.setTime(nextAlarm);
-            scheduleOffCalendar.add(Calendar.HOUR, 1);
-            scheduleIdOff = mPrefs.getScheduleIdOff();
-            scheduleNameOff = mPrefs.getScheduleNameOff();
-            createUpdateSchedule(scheduleIdOff, scheduleNameOff, lightGroupName, scheduleOffCalendar.getTime(),
-                    createLightStateOff(), secondaryMessageCallback,
-                    new ValueCallback<PHSchedule>() {
-                        @Override
-                        public void go(PHSchedule createdSchedule) {
-                            mPrefs.setScheduleIdOff(createdSchedule.getIdentifier());
+                // the second schedule brightens the light slowly over the course of
+                scheduleBrightenCalendar = Calendar.getInstance();
+                scheduleBrightenCalendar.setTime(scheduleOnCalendar.getTime());
+                scheduleBrightenCalendar.add(Calendar.SECOND, 10); // start 10 seconds after turning the light on
+                scheduleIdBrighten = mPrefs.getScheduleIdBrighten();
+                scheduleNameBrighten = mPrefs.getScheduleNameBrighten();
+                createUpdateSchedule(scheduleIdBrighten, scheduleNameBrighten, lightGroupName,
+                        scheduleBrightenCalendar.getTime(),
+                        // technically, this will result in the light reaching its brightest setting 10 seconds after
+                        // the alarm of the phone goes off, as we will start the brighten process 10 seconds after
+                        // the turn-on schedule.
+                        createLightStateBrighten(),
+                        secondaryMessageCallback,
+                        new ValueCallback<PHSchedule>() {
+                            @Override
+                            public void go(PHSchedule createdSchedule) {
+                                mPrefs.setScheduleIdBrighten(createdSchedule.getIdentifier());
+                            }
                         }
-                    }
-            );
+                );
+
+                // todo: make the "one hour" configurable
+                // the last schedule will turn the light off after one hour
+                scheduleOffCalendar = Calendar.getInstance();
+                scheduleOffCalendar.setTime(nextAlarm);
+                scheduleOffCalendar.add(Calendar.HOUR, 1);  // turn the light off one hour after the alarm went off
+                scheduleIdOff = mPrefs.getScheduleIdOff();
+                scheduleNameOff = mPrefs.getScheduleNameOff();
+                createUpdateSchedule(scheduleIdOff, scheduleNameOff, lightGroupName, scheduleOffCalendar.getTime(),
+                        createLightStateOff(), secondaryMessageCallback,
+                        new ValueCallback<PHSchedule>() {
+                            @Override
+                            public void go(PHSchedule createdSchedule) {
+                                mPrefs.setScheduleIdOff(createdSchedule.getIdentifier());
+                            }
+                        }
+                );
+
+            } // end if (nextAlarm != null)
         }
     }
 
@@ -379,14 +391,15 @@ public class SyncManager {
     }
 
     /**
+     * Creates a hue lights state object that transitions from the lights current state to full brightness within
+     * the time configured in {@link org.github.gentlewake.data.ApplicationPreferences#getTransitionMinutes()}.
+     *
      * @return a light state to turn the hue on.
      */
     private PHLightState createLightStateBrighten() {
         PHLightState scheduleLightState;
         scheduleLightState = new PHLightState();
         // the transition time is measured in 100ms, so to get from minutes to 100ms we need * 60 * 10
-        // technically, this will result in the light reaching its brightest setting 10 seconds after the alarm
-        // of the phone goes off, as we will start the brighten process 10 seconds after the turn-on schedule.
         scheduleLightState.setTransitionTime(this.mPrefs.getTransitionMinutes() * 60 * 10);
         scheduleLightState.setBrightness(255);
         return scheduleLightState;
