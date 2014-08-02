@@ -45,6 +45,12 @@
                 <action android:name="android.net.wifi.supplicant.CONNECTION_CHANGE" />
             </intent-filter>
 
+            <!-- ... or when the device is plugged in for charging -->
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+                <!--<action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>-->
+            </intent-filter>
+
         </receiver>
 
         <!-- this service synchronizes the alarm to the bridge -->
