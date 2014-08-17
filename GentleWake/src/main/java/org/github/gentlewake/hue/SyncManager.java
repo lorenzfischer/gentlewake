@@ -55,6 +55,15 @@ public class SyncManager {
      * @param bridge an object that the sync manager can use to configure the Hue bridge.
      */
     public SyncManager(Context ctx, PHBridge bridge) {
+
+        if (ctx == null) {
+            throw new IllegalArgumentException("Context cannot be Null");
+        }
+        if (bridge == null) {
+            throw new IllegalArgumentException("Bridge cannot be Null");
+        }
+
+
         this.mCtx = ctx;
         this.mHueBridge = bridge;
         this.mPrefs = ApplicationPreferences.getInstance(ctx);
@@ -178,9 +187,8 @@ public class SyncManager {
                 }
             });
         } else {
-            PHBridge bridge;
             Calendar scheduleOnCalendar;
-            String scheduleIdOn;
+            final String scheduleIdOn;
             String scheduleNameOn;
             Calendar scheduleBrightenCalendar;
             String scheduleIdBrighten;
@@ -190,16 +198,25 @@ public class SyncManager {
             String scheduleNameOff;
             Date nextAlarm;
 
+            scheduleIdOn = mPrefs.getScheduleIdOn();
+            scheduleNameOn = mPrefs.getScheduleNameOn();
+            scheduleIdBrighten = mPrefs.getScheduleIdBrighten();
+            scheduleNameBrighten = mPrefs.getScheduleNameBrighten();
+            scheduleIdOff = mPrefs.getScheduleIdOff();
+            scheduleNameOff = mPrefs.getScheduleNameOff();
+
             nextAlarm = AlarmUtils.getNextAlarm(mCtx);
 
             if (nextAlarm != null) {
+
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "Creating / updating all three schedules");
+                }
 
                 // the first schedule turns the light on
                 scheduleOnCalendar = Calendar.getInstance();
                 scheduleOnCalendar.setTime(nextAlarm);
                 scheduleOnCalendar.add(Calendar.MINUTE, mPrefs.getTransitionMinutes() * -1); // n mins before alarm
-                scheduleIdOn = mPrefs.getScheduleIdOn();
-                scheduleNameOn = mPrefs.getScheduleNameOn();
                 createUpdateSchedule(scheduleIdOn, scheduleNameOn, lightGroupName,
                         scheduleOnCalendar.getTime(), createLightStateOn(), primaryMessageCallback,
                         new ValueCallback<PHSchedule>() {
@@ -214,8 +231,6 @@ public class SyncManager {
                 scheduleBrightenCalendar = Calendar.getInstance();
                 scheduleBrightenCalendar.setTime(scheduleOnCalendar.getTime());
                 scheduleBrightenCalendar.add(Calendar.SECOND, 10); // start 10 seconds after turning the light on
-                scheduleIdBrighten = mPrefs.getScheduleIdBrighten();
-                scheduleNameBrighten = mPrefs.getScheduleNameBrighten();
                 createUpdateSchedule(scheduleIdBrighten, scheduleNameBrighten, lightGroupName,
                         scheduleBrightenCalendar.getTime(),
                         // technically, this will result in the light reaching its brightest setting 10 seconds after
@@ -236,8 +251,7 @@ public class SyncManager {
                 scheduleOffCalendar = Calendar.getInstance();
                 scheduleOffCalendar.setTime(nextAlarm);
                 scheduleOffCalendar.add(Calendar.HOUR, 1);  // turn the light off one hour after the alarm went off
-                scheduleIdOff = mPrefs.getScheduleIdOff();
-                scheduleNameOff = mPrefs.getScheduleNameOff();
+
                 createUpdateSchedule(scheduleIdOff, scheduleNameOff, lightGroupName, scheduleOffCalendar.getTime(),
                         createLightStateOff(), secondaryMessageCallback,
                         new ValueCallback<PHSchedule>() {
@@ -248,8 +262,59 @@ public class SyncManager {
                         }
                 );
 
-            } // end if (nextAlarm != null)
+            } else { // there is no alarm scheduled, so we have to remove all hue schedules for this phone
+                removeSchedule(scheduleIdOn, secondaryMessageCallback);
+                removeSchedule(scheduleIdBrighten, secondaryMessageCallback);
+                removeSchedule(scheduleIdOff, secondaryMessageCallback);
+            }
         }
+    }
+
+    /**
+     * This method removes the given schedule from the Hue system.
+     * @param scheduleId the identifier of the schedule to be removed.
+     * @param messageCallback this callback will be called with a message about the removed schedule.
+     */
+    private void removeSchedule(final String scheduleId, final ValueCallback<String> messageCallback) {
+
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "Removing schedule with identifier " + scheduleId);
+        }
+
+        this.mHueBridge.removeSchedule(scheduleId, new DefaultPHScheduleListener(){
+            @Override
+            public void onSuccess() {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "onSuccess " + scheduleId);
+                }
+                messageCallback.go("Schedule with id '"+ scheduleId +"' removed from Hue bridge.");
+            }
+
+            // todo: remove these as soon as this works
+            @Override
+            public void onError(int i, String s) {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "onSuccess " + scheduleId);
+                }
+                messageCallback.go(s);
+            }
+
+            @Override
+            public void onStateUpdate(Hashtable<String, String> stringStringHashtable, List<PHHueError> phHueErrors) {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "onStateUpdate " + scheduleId);
+                }
+                messageCallback.go("onStateUpdate");
+            }
+
+            @Override
+            public void onCreated(PHSchedule schedule) {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "onCreated " + scheduleId);
+                }
+                messageCallback.go("onCreated");
+            }
+        });
     }
 
     /**
@@ -261,7 +326,7 @@ public class SyncManager {
      *                        about whether Hue's schedules were synchronized with the alarm settings of this phone.
      */
     public void syncAlarm(final ValueCallback<String> messageCallback) {
-        // sync the alarm using the same callback for both schedules.
+        // sync the alarm using the same callback for all messages.
         syncAlarm(messageCallback, messageCallback);
     }
 
@@ -333,6 +398,16 @@ public class SyncManager {
 
                     // todo: handle the case when the light group does not exist on the bridge (e.g. if it was renamed
                     // in the settings)
+                }
+
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG, "onSuccess");
+                }
+
+                @Override
+                public void onStateUpdate(Hashtable<String, String> stringStringHashtable, List<PHHueError> phHueErrors) {
+                    Log.d(TAG, "onStateUpdate");
                 }
             });
         } else {

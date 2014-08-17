@@ -27,7 +27,7 @@ import org.github.gentlewake.data.ApplicationPreferences;
 import java.util.List;
 
 /**
- * PHHomeActivity - The starting point in your own Hue App.
+ * BridgeListActivity - The starting point in your own Hue App.
  * 
  * For first time use, a Bridge search (UPNP) is performed and a list of all available bridges is displayed (and clicking one of them shows the PushLink dialog allowing authentication).
  * The last connected Bridge IP Address and Username are stored in SharedPreferences.
@@ -40,10 +40,10 @@ import java.util.List;
  * @author SteveyO
  *
  */
-public class PHHomeActivity extends Activity implements OnItemClickListener {
+public class BridgeListActivity extends Activity implements OnItemClickListener {
 
     private PHHueSDK mHueSdk;
-    public static final String TAG = "GentleWake.MainActivity";
+    public static final String TAG = "GentleWake.ListActy";
     private ApplicationPreferences mPrefs;
     private AccessPointListAdapter adapter;
     
@@ -81,7 +81,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
             lastAccessPoint.setUsername(lastUsername);
            
             if (!mHueSdk.isAccessPointConnected(lastAccessPoint)) {
-               PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, PHHomeActivity.this);
+               PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, BridgeListActivity.this);
                mHueSdk.connect(lastAccessPoint);
             }
         }
@@ -121,7 +121,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
             } else {
                 // FallBack Mechanism.  If a UPNP Search returns no results then perform an IP Scan. Of course it could fail as the user has disconnected their bridge, connected to a wrong network or disabled Network Discovery on their router so it is not guaranteed to work.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                    PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, PHHomeActivity.this);
+                    PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, BridgeListActivity.this);
                     PHBridgeSearchManager sm = (PHBridgeSearchManager) mHueSdk.getSDKService(PHHueSDK.SEARCH_BRIDGE);
                     // Start the IP Scan Search if the UPNP and NPNP return 0 results.
                     sm.search(false, false, true);
@@ -151,16 +151,16 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
         public void onAuthenticationRequired(PHAccessPoint accessPoint) {
             Log.w(TAG, "Authentication Required.");
             mHueSdk.startPushlinkAuthentication(accessPoint);
-            startActivity(new Intent(PHHomeActivity.this, PHPushlinkActivity.class));
+            startActivity(new Intent(BridgeListActivity.this, PHPushlinkActivity.class));
            
         }
 
         @Override
         public void onConnectionResumed(PHBridge bridge) {
-            if (PHHomeActivity.this.isFinishing())
+            if (BridgeListActivity.this.isFinishing())
                 return;
             
-            Log.v(TAG, "onConnectionResumed" + bridge.getResourceCache().getBridgeConfiguration().getIpAddress());
+            Log.v(TAG, "onConnectionResumed on ip " + bridge.getResourceCache().getBridgeConfiguration().getIpAddress());
             mHueSdk.getLastHeartbeat().put(bridge.getResourceCache().getBridgeConfiguration().getIpAddress(),  System.currentTimeMillis());
             for (int i = 0; i < mHueSdk.getDisconnectedAccessPoint().size(); i++) {
 
@@ -192,10 +192,10 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
             else if (code == PHHueError.BRIDGE_NOT_RESPONDING) {
                 Log.w(TAG, "Bridge Not Responding . . . ");
                 PHWizardAlertDialog.getInstance().closeProgressDialog();
-                PHHomeActivity.this.runOnUiThread(new Runnable() {
+                BridgeListActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PHWizardAlertDialog.showErrorDialog(PHHomeActivity.this, message, R.string.btn_ok);
+                        PHWizardAlertDialog.showErrorDialog(BridgeListActivity.this, message, R.string.btn_ok);
                     }
                 }); 
 
@@ -203,10 +203,10 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
             else if (code == PHMessageType.BRIDGE_NOT_FOUND) {
                 PHWizardAlertDialog.getInstance().closeProgressDialog();
 
-                PHHomeActivity.this.runOnUiThread(new Runnable() {
+                BridgeListActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PHWizardAlertDialog.showErrorDialog(PHHomeActivity.this, message, R.string.btn_ok);
+                        PHWizardAlertDialog.showErrorDialog(BridgeListActivity.this, message, R.string.btn_ok);
                     }
                 });                
             }
@@ -237,6 +237,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
             mHueSdk.getNotificationManager().unregisterSDKListener(listener);
         }
         mHueSdk.disableAllHeartbeat();
+        //mHueSdk.destroySDK();
     }
         
     @Override
@@ -255,12 +256,12 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
                 mHueSdk.disconnect(connectedBridge);
             }
         }
-        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, PHHomeActivity.this);
+        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, BridgeListActivity.this);
         mHueSdk.connect(accessPoint);
     }
     
     public void doBridgeSearch() {
-        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, PHHomeActivity.this);
+        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, BridgeListActivity.this);
         PHBridgeSearchManager sm = (PHBridgeSearchManager) mHueSdk.getSDKService(PHHueSDK.SEARCH_BRIDGE);
         // Start the UPNP Searching of local bridges.
         sm.search(true, true);

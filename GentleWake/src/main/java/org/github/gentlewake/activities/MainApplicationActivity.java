@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.hue.sdk.PHSDKListener;
 import com.philips.lighting.model.PHBridge;
+import com.philips.lighting.model.PHBridgeResourcesCache;
 import com.philips.lighting.model.PHSchedule;
 
 import org.github.gentlewake.R;
@@ -36,7 +37,7 @@ import java.util.Hashtable;
  */
 public class MainApplicationActivity extends Activity {
 
-    private static final String TAG = "GentleWake";
+    private static final String TAG = "GentleWake.MainAppActy";
 
     private PHHueSDK mHueSdk;
 
@@ -55,7 +56,13 @@ public class MainApplicationActivity extends Activity {
     /** This listener will be informed about updates to the Hue. */
     private PHSDKListener mSdkListener;
 
-    private static final int MAX_HUE = 65535;
+    /** The button for issueing sync commands. */
+    private Button mBtnSync;
+
+    /** The button for issuing a disconnect from the bridge. */
+    private Button mDisconnectButton;
+
+    //private static final int MAX_HUE = 65535;
 
     /** An object which contains global settings of the app. */
     private ApplicationPreferences mPrefs;
@@ -64,30 +71,16 @@ public class MainApplicationActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final Button btnSync;
-        Button disconnectButton;
         final ValueCallback<String> logMessageCallback;
 
         setTitle(R.string.app_name);
         setContentView(R.layout.activity_main);
+
+        this.mDateFmt = new SimpleDateFormat();
         this.mHueSdk = PHHueSDK.create();
         this.mPrefs = ApplicationPreferences.getInstance(this);
-        this.mSyncManager = new SyncManager(this, this.mHueSdk.getSelectedBridge());
         this.mTxtvLog = (TextView) findViewById(R.id.log);
         this.mScrollvLog = (ScrollView) findViewById(R.id.scrollViewLog);
-        this.mDateFmt = new SimpleDateFormat();
-
-        this.mSdkListener = new DefaultPHSDKListener() {
-            @Override
-            public void onCacheUpdated(int i, final PHBridge bridge) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateUi(bridge);
-                    }
-                });
-            }
-        };
 
         // this callback writes everything into the log text view
         logMessageCallback = new ValueCallback<String>() {
@@ -97,8 +90,8 @@ public class MainApplicationActivity extends Activity {
             }
         };
 
-        btnSync = (Button) findViewById(R.id.buttonSync);
-        btnSync.setOnClickListener(new OnClickListener() {
+        mBtnSync = (Button) findViewById(R.id.buttonSync);
+        mBtnSync.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -106,9 +99,10 @@ public class MainApplicationActivity extends Activity {
             }
 
         });
+        mBtnSync.setEnabled(false);
 
-        disconnectButton = (Button) findViewById(R.id.buttonDisconnect);
-        disconnectButton.setOnClickListener(new OnClickListener() {
+        mDisconnectButton = (Button) findViewById(R.id.buttonDisconnect);
+        mDisconnectButton.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -117,7 +111,7 @@ public class MainApplicationActivity extends Activity {
 
                 // Starting home activity again (access point selection)
                 // prevent the PushLink Activity being shown when pressing the back button.
-                Intent intent = new Intent(getApplicationContext(), PHHomeActivity.class);
+                Intent intent = new Intent(getApplicationContext(), BridgeListActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -129,53 +123,72 @@ public class MainApplicationActivity extends Activity {
             }
 
         });
+        mDisconnectButton.setEnabled(false);
 
-        // show current alarm and hue configuration in ui
-        updateUi(this.mHueSdk.getSelectedBridge());
+        // ... otherwise we will update the ui as soon as we receive a bridge object
+        this.mSdkListener = new DefaultPHSDKListener() {
+            @Override
+            public void onCacheUpdated(int i, final PHBridge bridge) {
+                mSyncManager = new SyncManager(MainApplicationActivity.this, bridge);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBtnSync.setEnabled(mSyncManager != null);
+                        mDisconnectButton.setEnabled(mSyncManager != null);
+                        updateUi(bridge);
+                    }
+                });
+            }
+        };
+
     }
 
     /**
      * This method updates all the ui components, so they contain the current configured alarm, as well as the
      * current configuration of the Hue bridge (Hue on/off).
      *
-     * @param selectedBridge the bridge to read the data from.
+     * @param selectedBridge the bridge to read the data from, if null, nothing will be updated.
      */
     private void updateUi(PHBridge selectedBridge) {
-        Date nextAlarm;
-        PHSchedule hueOn;
-        PHSchedule hueOff;
-        Hashtable<String, PHSchedule> schedules;
+        if (selectedBridge != null) {
+            PHBridgeResourcesCache resourceCache;
+            Date nextAlarm;
+            PHSchedule hueOn;
+            PHSchedule hueOff;
+            Hashtable<String, PHSchedule> schedules;
 
-        schedules = this.mHueSdk.getSelectedBridge().getResourceCache().getSchedules();
-        nextAlarm = AlarmUtils.getNextAlarm(this);
-        hueOn = null;
-        hueOff = null;
+            resourceCache = selectedBridge.getResourceCache();
+            schedules = resourceCache.getSchedules();
+            nextAlarm = AlarmUtils.getNextAlarm(this);
+            hueOn = null;
+            hueOff = null;
 
-        if (this.mPrefs.getScheduleIdOn() != null) {
-            hueOn = schedules.get(this.mPrefs.getScheduleIdOn());
+            if (this.mPrefs.getScheduleIdOn() != null) {
+                hueOn = schedules.get(this.mPrefs.getScheduleIdOn());
+            }
+            if (this.mPrefs.getScheduleIdOff() != null) {
+                hueOff = schedules.get(this.mPrefs.getScheduleIdOff());
+            }
+
+            if (nextAlarm == null) {
+                ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText("Not Set");
+            } else {
+                ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format(nextAlarm));
+            }
+
+            if (hueOn == null) {
+                ((TextView) findViewById(R.id.txtvHueOn)).setText(R.string.txt_not_set);
+            } else {
+                ((TextView) findViewById(R.id.txtvHueOn)).setText(this.mDateFmt.format(hueOn.getDate()));
+            }
+
+            if (hueOff == null) {
+                ((TextView) findViewById(R.id.txtvHueOff)).setText(R.string.txt_not_set);
+            } else {
+                ((TextView) findViewById(R.id.txtvHueOff)).setText(this.mDateFmt.format(hueOff.getDate()));
+            }
         }
-        if (this.mPrefs.getScheduleIdOff() != null) {
-            hueOff = schedules.get(this.mPrefs.getScheduleIdOff());
-        }
-
-        if (nextAlarm == null) {
-            ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText("Not Set");
-        } else {
-            ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format(nextAlarm));
-        }
-
-        if (hueOn == null) {
-            ((TextView) findViewById(R.id.txtvHueOn)).setText(R.string.txt_not_set);
-        } else {
-            ((TextView) findViewById(R.id.txtvHueOn)).setText(this.mDateFmt.format(hueOn.getDate()));
-        }
-
-        if (hueOff == null) {
-            ((TextView) findViewById(R.id.txtvHueOff)).setText(R.string.txt_not_set);
-        } else {
-            ((TextView) findViewById(R.id.txtvHueOff)).setText(this.mDateFmt.format(hueOff.getDate()));
-        }
-
     }
 
     /**
@@ -202,9 +215,19 @@ public class MainApplicationActivity extends Activity {
 
     @Override
     protected void onStart() {
+        PHBridge selectedBridge;
+
         super.onStart();
         this.mHueSdk.getNotificationManager().registerSDKListener(this.mSdkListener);
-        updateUi(this.mHueSdk.getSelectedBridge());
+
+        // test to see if we have a connection to the bridge already
+        selectedBridge = this.mHueSdk.getSelectedBridge();
+        if (selectedBridge != null) {
+            this.mSyncManager = new SyncManager(this, selectedBridge);  // the sync-button relies on this
+            mBtnSync.setEnabled(this.mSyncManager != null);
+            mDisconnectButton.setEnabled(this.mSyncManager != null);
+            updateUi(selectedBridge);                 // show current alarm and hue configuration in ui
+        }
     }
 
     @Override

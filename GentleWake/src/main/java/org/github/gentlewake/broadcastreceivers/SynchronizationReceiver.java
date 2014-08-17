@@ -4,6 +4,8 @@ package org.github.gentlewake.broadcastreceivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
@@ -18,26 +20,48 @@ import org.github.gentlewake.services.AlarmSynchronizationService;
  */
 public class SynchronizationReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "GentleWake";
+    private static final String TAG = "GentleWake.SyncReceiver";
 
 
     @Override
     public void onReceive(final Context context, Intent intent) {
         boolean doSync = false;
 
-        if (WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION.equals(intent.getAction()) &&
-                intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false) == true) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "a wifi connection has just been established");
-            }
-            doSync = true;
-        }
+        if (WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION.equals(intent.getAction())) {
+            if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false) == true) {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "A wifi connection has just been established");
+                }
+                doSync = true;
 
-        if ("android.intent.action.ALARM_CHANGED".equals(intent.getAction())) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "an alarm has just been changed");
+                // introduce artificial 5 second lag, to give the wifi connection a bit more time to initialize
+                try {
+                    Thread.sleep(5 * 1000);
+                } catch (InterruptedException e) {
+                    // it doesn't matter if we were interrupted while waiting, so we don't do anything here
+                }
             }
-            doSync = true;
+        } else {
+            ConnectivityManager connManager;
+            NetworkInfo mWifi;
+
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "We received an intent that tells us to do alarm syncing. Checking for a WiFi connection..");
+            }
+
+            connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if (mWifi.isConnected()) {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "Wifi is connected.");
+                }
+                doSync = true;
+            } else {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "Wifi not connected.");
+                }
+            }
         }
 
         if (doSync) {
