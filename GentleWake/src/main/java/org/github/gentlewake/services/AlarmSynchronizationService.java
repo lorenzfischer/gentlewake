@@ -133,7 +133,7 @@ public class AlarmSynchronizationService extends Service {
             protected void onPostExecute(Void aVoid) {
                 stopSelf(startId); // tell the service that we were able to run to completion and don't need to be restarted
             }
-        }.execute(null, null, null);
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
 
         return Service.START_REDELIVER_INTENT; // make sure we get restarted, if we were cancelled
     }
@@ -171,7 +171,7 @@ public class AlarmSynchronizationService extends Service {
                 });
 
             }
-        }, null); // don't configure secondary message callback
+        });
     }
 
     /**

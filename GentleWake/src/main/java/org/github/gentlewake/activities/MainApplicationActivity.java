@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Layout;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -25,7 +24,6 @@ import org.github.gentlewake.data.ApplicationPreferences;
 import org.github.gentlewake.hue.DefaultPHSDKListener;
 import org.github.gentlewake.util.AlarmUtils;
 import org.github.gentlewake.hue.SyncManager;
-import org.github.gentlewake.util.ValueCallback;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -76,11 +74,12 @@ public class MainApplicationActivity extends Activity {
     /** An object which contains global settings of the app. */
     private ApplicationPreferences mPrefs;
 
+    /** We use this task to read from logcat. */
+    private AsyncTask<Void, String, Void> mLogcatReaderTask;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        final ValueCallback<String> logMessageCallback;
 
         setTitle(R.string.app_name);
         setContentView(R.layout.activity_main);
@@ -96,7 +95,7 @@ public class MainApplicationActivity extends Activity {
 
             @Override
             public void onClick(View v) {
-                mSyncManager.syncAlarm(logMessageCallback);
+                mSyncManager.syncAlarm(null);
             }
 
         });
@@ -142,41 +141,6 @@ public class MainApplicationActivity extends Activity {
                 });
             }
         };
-
-
-        // start reading the logcat log in a background thread
-        new AsyncTask<Void, String, Void>() {
-
-            @Override
-            protected Void doInBackground(Void... args) {
-                Process process;
-                BufferedReader reader;
-                String line;
-
-                try {
-                    process = Runtime.getRuntime().exec("logcat -d "+SyncManager.TAG+":D *:S");
-                    reader = new BufferedReader(
-                            new InputStreamReader(process.getInputStream()));
-
-                    while ((line = reader.readLine()) != null) {
-                        publishProgress(line);
-                    }
-                } catch (IOException e) {
-                    // post the exception to the log
-                    publishProgress(e.getMessage());
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onProgressUpdate(String... values) {
-                logMessage(values);
-            }
-
-        }.execute();
-
-
 
     }
 
@@ -263,9 +227,9 @@ public class MainApplicationActivity extends Activity {
 
     @Override
     protected void onStart() {
-        PHBridge selectedBridge;
-
         super.onStart();
+
+        PHBridge selectedBridge;
         this.mHueSdk.getNotificationManager().registerSDKListener(this.mSdkListener);
 
         // test to see if we have a connection to the bridge already
@@ -276,12 +240,59 @@ public class MainApplicationActivity extends Activity {
             mDisconnectButton.setEnabled(this.mSyncManager != null);
             updateUi(selectedBridge);                 // show current alarm and hue configuration in ui
         }
+
+        // start reading the logcat log in a background thread
+        if (mLogcatReaderTask != null) {
+            mLogcatReaderTask.cancel(true);
+        }
+        mLogcatReaderTask = new AsyncTask<Void, String, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... args) {
+                Process process;
+                BufferedReader reader;
+
+                try {
+                    process = Runtime.getRuntime().exec("logcat "+SyncManager.TAG+":D *:S");
+                    reader = new BufferedReader(
+                            new InputStreamReader(process.getInputStream()));
+
+                    while (true) { // we do this eternally
+                        String line;
+
+                        line = reader.readLine();
+                        if (line == null) {
+                            // try again in 2 seconds
+                            Thread.sleep(2 * 1000);
+                        } else {
+                            publishProgress(line);
+                        }
+                    }
+                } catch (IOException e) {
+                    // post the exception to the log
+                    publishProgress(e.getMessage());
+                } catch (InterruptedException e) {
+                    // this happens if this object gets killed while we're waiting.
+                    publishProgress("Exiting");
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(String... values) {
+                logMessage(values);
+            }
+
+        };
+        mLogcatReaderTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         this.mHueSdk.getNotificationManager().unregisterSDKListener(this.mSdkListener);
+        mLogcatReaderTask.cancel(true);
     }
 
     @Override

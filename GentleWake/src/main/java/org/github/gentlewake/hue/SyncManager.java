@@ -105,7 +105,7 @@ public class SyncManager {
      */
     public void ensureAlarmLightGroup(String alarmLightGroupName, final Callback callback) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Checking for existence of light group '"+alarmLightGroupName+"' ...");
+            Log.d(TAG, "Checking for existence of light group '" + alarmLightGroupName + "' ...");
         }
 
         if (callback != null) {
@@ -165,13 +165,11 @@ public class SyncManager {
      * <p/>
      * This method makes sure that the configured light group exist on the bridge.
      *
-     * @param primaryMessageCallback   this callback will be called with a message for the user after the schedule that
-     *                                 turns the Hue lights "on" has been changed or if there is some general information
-     *                                 that is important for the user.
-     * @param secondaryMessageCallback this callback will be called with messages for the user log that are not
-     *                                 primarily important, but that may still be useful to show in a user log.
+     * @param messageCallback this callback will be called with a message for the user after the schedule that
+     *                        turns the Hue lights "on" has been changed or if there is some general information
+     *                        that is important for the user.
      */
-    public void syncAlarm(final ValueCallback<String> primaryMessageCallback, final ValueCallback<String> secondaryMessageCallback) {
+    public void syncAlarm(final ValueCallback<String> messageCallback) {
         if (Log.isLoggable(TAG, Log.INFO)) {
             Log.i(TAG, "Syncing alarms");
         }
@@ -183,7 +181,7 @@ public class SyncManager {
                 @Override
                 public void go() {
                     // todo: should I prevent a stack overflow, here?
-                    syncAlarm(primaryMessageCallback); // self-call, but this time the group should exist
+                    syncAlarm(messageCallback); // self-call, but this time the group should exist
                 }
             });
         } else {
@@ -218,7 +216,7 @@ public class SyncManager {
                 scheduleOnCalendar.setTime(nextAlarm);
                 scheduleOnCalendar.add(Calendar.MINUTE, mPrefs.getTransitionMinutes() * -1); // n mins before alarm
                 createUpdateSchedule(scheduleIdOn, scheduleNameOn, lightGroupName,
-                        scheduleOnCalendar.getTime(), createLightStateOn(), primaryMessageCallback,
+                        scheduleOnCalendar.getTime(), createLightStateOn(), messageCallback,
                         new ValueCallback<PHSchedule>() {
                             @Override
                             public void go(PHSchedule createdSchedule) {
@@ -237,7 +235,7 @@ public class SyncManager {
                         // the alarm of the phone goes off, as we will start the brighten process 10 seconds after
                         // the turn-on schedule.
                         createLightStateBrighten(),
-                        secondaryMessageCallback,
+                        null,
                         new ValueCallback<PHSchedule>() {
                             @Override
                             public void go(PHSchedule createdSchedule) {
@@ -253,7 +251,7 @@ public class SyncManager {
                 scheduleOffCalendar.add(Calendar.HOUR, 1);  // turn the light off one hour after the alarm went off
 
                 createUpdateSchedule(scheduleIdOff, scheduleNameOff, lightGroupName, scheduleOffCalendar.getTime(),
-                        createLightStateOff(), secondaryMessageCallback,
+                        createLightStateOff(), null,
                         new ValueCallback<PHSchedule>() {
                             @Override
                             public void go(PHSchedule createdSchedule) {
@@ -263,16 +261,17 @@ public class SyncManager {
                 );
 
             } else { // there is no alarm scheduled, so we have to remove all hue schedules for this phone
-                removeSchedule(scheduleIdOn, secondaryMessageCallback);
-                removeSchedule(scheduleIdBrighten, secondaryMessageCallback);
-                removeSchedule(scheduleIdOff, secondaryMessageCallback);
+                removeSchedule(scheduleIdOn, messageCallback);
+                removeSchedule(scheduleIdBrighten, messageCallback);
+                removeSchedule(scheduleIdOff, messageCallback);
             }
         }
     }
 
     /**
      * This method removes the given schedule from the Hue system.
-     * @param scheduleId the identifier of the schedule to be removed.
+     *
+     * @param scheduleId      the identifier of the schedule to be removed.
      * @param messageCallback this callback will be called with a message about the removed schedule.
      */
     private void removeSchedule(final String scheduleId, final ValueCallback<String> messageCallback) {
@@ -281,22 +280,28 @@ public class SyncManager {
             Log.d(TAG, "Removing schedule with identifier " + scheduleId);
         }
 
-        this.mHueBridge.removeSchedule(scheduleId, new DefaultPHScheduleListener(){
+        this.mHueBridge.removeSchedule(scheduleId, new DefaultPHScheduleListener() {
             @Override
             public void onSuccess() {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "onSuccess " + scheduleId);
+                String msg;
+
+                msg = "'" + scheduleId + "' removed from Hue bridge.";
+                if (Log.isLoggable(TAG, Log.INFO)) {
+                    Log.i(TAG, msg);
                 }
-                messageCallback.go("Schedule with id '"+ scheduleId +"' removed from Hue bridge.");
+                messageCallback.go(msg);
             }
 
             // todo: remove these as soon as this works
             @Override
             public void onError(int i, String s) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "onSuccess " + scheduleId);
+                String msg;
+
+                msg = "Error while removing schedule '" + scheduleId + "': " + s;
+                if (Log.isLoggable(TAG, Log.ERROR)) {
+                    Log.e(TAG, msg);
                 }
-                messageCallback.go(s);
+                messageCallback.go(msg);
             }
 
             @Override
@@ -304,7 +309,6 @@ public class SyncManager {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "onStateUpdate " + scheduleId);
                 }
-                messageCallback.go("onStateUpdate");
             }
 
             @Override
@@ -312,22 +316,8 @@ public class SyncManager {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "onCreated " + scheduleId);
                 }
-                messageCallback.go("onCreated");
             }
         });
-    }
-
-    /**
-     * This method sets the time for Hue to turn on the light group with the supplied name.
-     * <p/>
-     * This method makes sure that the configured light group exist on the bridge.
-     *
-     * @param messageCallback this callback will be called with a message for the user. It will contain information
-     *                        about whether Hue's schedules were synchronized with the alarm settings of this phone.
-     */
-    public void syncAlarm(final ValueCallback<String> messageCallback) {
-        // sync the alarm using the same callback for all messages.
-        syncAlarm(messageCallback, messageCallback);
     }
 
     /**
@@ -377,10 +367,10 @@ public class SyncManager {
             this.mHueBridge.createSchedule(newSchedule, new DefaultPHScheduleListener() {
                 @Override
                 public void onCreated(PHSchedule createdSchedule) {
-                    String msg = "New schedule '" + createdSchedule.getName() + "' created for "
+                    String msg = "'" + createdSchedule.getName() + "' scheduled for "
                             + createdSchedule.getDate();
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, msg);
+                    if (Log.isLoggable(TAG, Log.INFO)) {
+                        Log.i(TAG, msg);
                     }
 
                     if (messageCallback != null) {
@@ -392,8 +382,8 @@ public class SyncManager {
 
                 @Override
                 public void onError(int i, String s) {
-                    if (Log.isLoggable(TAG, Log.WARN)) {
-                        Log.w(TAG, "Error while creating Schedule '" + newSchedule.getName() + "'. Error code " + i + ": " + s);
+                    if (Log.isLoggable(TAG, Log.ERROR)) {
+                        Log.e(TAG, "Error while creating Schedule '" + newSchedule.getName() + "'. Error code " + i + ": " + s);
                     }
 
                     // todo: handle the case when the light group does not exist on the bridge (e.g. if it was renamed
@@ -402,12 +392,16 @@ public class SyncManager {
 
                 @Override
                 public void onSuccess() {
-                    Log.d(TAG, "onSuccess");
+                    if (Log.isLoggable(TAG, Log.DEBUG)) {
+                        Log.d(TAG, "onSuccess");
+                    }
                 }
 
                 @Override
                 public void onStateUpdate(Hashtable<String, String> stringStringHashtable, List<PHHueError> phHueErrors) {
-                    Log.d(TAG, "onStateUpdate");
+                    if (Log.isLoggable(TAG, Log.DEBUG)) {
+                        Log.d(TAG, "onStateUpdate");
+                    }
                 }
             });
         } else {
@@ -433,21 +427,38 @@ public class SyncManager {
             this.mHueBridge.updateSchedule(schedule, new DefaultPHScheduleListener() {
                 @Override
                 public void onSuccess() {
-                    String msg = "Existing Hue schedule '" + schedule.getName() +
-                            "' updated for time " + schedule.getDate();
+                    String msg;
+
+                    msg = "'" + schedule.getName() + "' updated for " + schedule.getDate();
+
                     if (messageCallback != null) {
                         messageCallback.go(msg);
-                    } else {
-                        if (Log.isLoggable(TAG, Log.DEBUG)) {
-                            Log.d(TAG, msg);
-                        }
+                    }
+
+                    if (Log.isLoggable(TAG, Log.INFO)) {
+                        Log.i(TAG, msg);
                     }
                 }
 
                 @Override
                 public void onError(int i, String s) {
-                    if (Log.isLoggable(TAG, Log.WARN)) {
-                        Log.w(TAG, "Error code " + i + ":" + s);
+                    if (Log.isLoggable(TAG, Log.ERROR)) {
+                        Log.e(TAG, "Error code " + i + ":" + s);
+                    }
+                }
+
+                @Override
+                public void onStateUpdate(Hashtable<String, String> stringStringHashtable, List<PHHueError> phHueErrors) {
+                    String msg;
+
+                    msg = "'" + schedule.getName() + "' updated for " + schedule.getDate();
+
+                    if (messageCallback != null) {
+                        messageCallback.go(msg);
+                    }
+
+                    if (Log.isLoggable(TAG, Log.INFO)) {
+                        Log.i(TAG, msg);
                     }
                 }
             });
