@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class SyncManager {
 
-    private static final String TAG = "GentleWake.SyncManager";
+    public static final String TAG = "GentleWake.SyncManager";
 
     private Context mCtx;
 
@@ -105,7 +105,7 @@ public class SyncManager {
      */
     public void ensureAlarmLightGroup(String alarmLightGroupName, final Callback callback) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Checking for existence of light group...");
+            Log.d(TAG, "Checking for existence of light group '"+alarmLightGroupName+"' ...");
         }
 
         if (callback != null) {
@@ -172,8 +172,8 @@ public class SyncManager {
      *                                 primarily important, but that may still be useful to show in a user log.
      */
     public void syncAlarm(final ValueCallback<String> primaryMessageCallback, final ValueCallback<String> secondaryMessageCallback) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Syncing alarms");
+        if (Log.isLoggable(TAG, Log.INFO)) {
+            Log.i(TAG, "Syncing alarms");
         }
         String lightGroupName;
         lightGroupName = this.mPrefs.getLightGroupName();

@@ -2,8 +2,11 @@ package org.github.gentlewake.activities;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.Layout;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -24,6 +27,9 @@ import org.github.gentlewake.util.AlarmUtils;
 import org.github.gentlewake.hue.SyncManager;
 import org.github.gentlewake.util.ValueCallback;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,6 +44,9 @@ import java.util.Hashtable;
 public class MainApplicationActivity extends Activity {
 
     private static final String TAG = "GentleWake.MainAppActy";
+
+    /** The maximum number of lines that should be shown in the message log text field. */
+    public static final int MAX_LOG_LINES = 50;
 
     private PHHueSDK mHueSdk;
 
@@ -81,14 +90,6 @@ public class MainApplicationActivity extends Activity {
         this.mPrefs = ApplicationPreferences.getInstance(this);
         this.mTxtvLog = (TextView) findViewById(R.id.log);
         this.mScrollvLog = (ScrollView) findViewById(R.id.scrollViewLog);
-
-        // this callback writes everything into the log text view
-        logMessageCallback = new ValueCallback<String>() {
-            @Override
-            public void go(String message) {
-                logMessage(message);
-            }
-        };
 
         mBtnSync = (Button) findViewById(R.id.buttonSync);
         mBtnSync.setOnClickListener(new OnClickListener() {
@@ -142,6 +143,41 @@ public class MainApplicationActivity extends Activity {
             }
         };
 
+
+        // start reading the logcat log in a background thread
+        new AsyncTask<Void, String, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... args) {
+                Process process;
+                BufferedReader reader;
+                String line;
+
+                try {
+                    process = Runtime.getRuntime().exec("logcat -d "+SyncManager.TAG+":D *:S");
+                    reader = new BufferedReader(
+                            new InputStreamReader(process.getInputStream()));
+
+                    while ((line = reader.readLine()) != null) {
+                        publishProgress(line);
+                    }
+                } catch (IOException e) {
+                    // post the exception to the log
+                    publishProgress(e.getMessage());
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(String... values) {
+                logMessage(values);
+            }
+
+        }.execute();
+
+
+
     }
 
     /**
@@ -194,23 +230,35 @@ public class MainApplicationActivity extends Activity {
     /**
      * Writes a message to the log view so the user knows what's going on.
      *
-     * @param msg the message to add to the log view.
+     * @param lines the messages to add to the log view.
      */
-    public void logMessage(String msg) {
-        final String formattedMessage;
+    public void logMessage(String... lines) {
+        StringBuilder formattedMessage;
+        int linesToRemove;
 
-        formattedMessage = String.format("%s: %s\n", mDateFmt.format(new Date()), msg);
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, formattedMessage);
+        formattedMessage = new StringBuilder();
+        for (String line : lines) { // I'm so looking forward to join()
+            formattedMessage.append(line).append("\n");
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mTxtvLog.append(formattedMessage);
-                mScrollvLog.fullScroll(ScrollView.FOCUS_DOWN);
-            }
-        });
 
+        // add new line
+        mTxtvLog.append(formattedMessage);
+        // remove old lines if necessary
+        // copied from here: http://stackoverflow.com/questions/5078058/how-to-delete-the-old-lines-of-a-textview
+        linesToRemove = mTxtvLog.getLineCount() - MAX_LOG_LINES;
+        if (linesToRemove > 0) {
+            for (int i = 0; i < linesToRemove; i++) {
+                Editable text;
+                Layout layout;
+
+                text = mTxtvLog.getEditableText();
+                layout = mTxtvLog.getLayout();
+                text.delete(layout.getLineStart(0), layout.getLineEnd(0));
+            }
+        }
+
+        // scroll to bottom of text field
+        mScrollvLog.fullScroll(ScrollView.FOCUS_DOWN);
     }
 
     @Override

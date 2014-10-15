@@ -1,7 +1,7 @@
 apply plugin: 'android'
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 20
     buildToolsVersion '19.1.0'
 
     defaultConfig {
@@ -24,10 +24,10 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:+'
     compile 'org.apache.httpcomponents:httpclient-android:4.3.3'
     compile 'com.fasterxml.jackson.core:jackson-core:2.3.1'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.1'
     compile files('libs/huelocalsdk.jar')
     compile files('libs/sdkresources.jar')
+    compile 'com.android.support:appcompat-v7:20.+'
 }

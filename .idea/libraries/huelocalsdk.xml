@@ -4,8 +4,6 @@
       <root url="jar://$PROJECT_DIR$/GentleWake/libs/huelocalsdk.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="file://$PROJECT_DIR$/../PhilipsHueSDK-Java-MultiPlatform-Android/decompiled sources/huelocalsdk.src" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
