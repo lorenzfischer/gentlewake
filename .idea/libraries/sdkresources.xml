@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="sdkresources">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/GentleWake/libs/sdkresources.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
