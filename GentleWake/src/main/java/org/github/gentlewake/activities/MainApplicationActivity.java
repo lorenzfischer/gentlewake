@@ -32,6 +32,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.regex.Pattern;
 
 /**
  * MainApplicationActivity - The starting point for creating your own Hue App.
@@ -246,6 +247,7 @@ public class MainApplicationActivity extends Activity {
             mLogcatReaderTask.cancel(true);
         }
         mLogcatReaderTask = new AsyncTask<Void, String, Void>() {
+            private Pattern pattern = Pattern.compile("“");
 
             @Override
             protected Void doInBackground(Void... args) {
@@ -253,7 +255,7 @@ public class MainApplicationActivity extends Activity {
                 BufferedReader reader;
 
                 try {
-                    process = Runtime.getRuntime().exec("logcat "+SyncManager.TAG+":D *:S");
+                    process = Runtime.getRuntime().exec("logcat -v time "+SyncManager.TAG+":D *:S");
                     reader = new BufferedReader(
                             new InputStreamReader(process.getInputStream()));
 
@@ -265,6 +267,8 @@ public class MainApplicationActivity extends Activity {
                             // try again in 2 seconds
                             Thread.sleep(2 * 1000);
                         } else {
+                            // the log line contains way too much information, strip away some of it.
+
                             publishProgress(line);
                         }
                     }
@@ -297,6 +301,8 @@ public class MainApplicationActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
+
         PHBridge bridge = mHueSdk.getSelectedBridge();
         if (bridge != null) {
 
@@ -305,7 +311,6 @@ public class MainApplicationActivity extends Activity {
             }
 
             mHueSdk.disconnect(bridge);
-            super.onDestroy();
         }
     }
 }
