@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.github.gentlewake" >
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.github.gentlewake" >
 
     <!-- To communicate with the Hue-Bridge we need access to the internet -->
-    <uses-permission android:name="android.permission.INTERNET"/> <!-- necessary to connect to the Hue bridge -->
-    <!--<uses-permission android:name="android.permission.GET_TASKS"/>-->
-    <!--<uses-permission android:name="android.permission.BATTERY_STATS"/> maybe not: necessary to automatically sync alarms when the phone is plugged in -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- necessary to connect to the Hue bridge -->
+    <!-- <uses-permission android:name="android.permission.GET_TASKS"/> -->
+    <!-- <uses-permission android:name="android.permission.BATTERY_STATS"/> maybe not: necessary to automatically sync alarms when the phone is plugged in -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- so we can prevent syncing (and wasting resources) if there is no wifi connection -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- necessary to automatically sync alarms when the user connects to the wifi at home -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-
-    <!--<uses-sdk android:minSdkVersion="17" android:targetSdkVersion="17"/>-->
-
+    <!-- necessary to automatically sync alarms when the user connects to the wifi at bridgelist -->
+    <!-- <uses-sdk android:minSdkVersion="17" android:targetSdkVersion="17"/> -->
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
         <activity
-            android:name=".activities.BridgeListActivity"
+            android:name=".views.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,19 +26,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.PreferencesActivity" android:label="@string/action_settings" />
+
         <activity
-            android:name=".activities.MainApplicationActivity"
-            android:label="@string/txt_selectbridges" >
-        </activity>
+            android:name="org.github.gentlewake.views.DatastorePreferencesActivity"
+            android:label="@string/action_settings" />
+
         <activity
-            android:name=".activities.PHPushlinkActivity"
+            android:name="org.github.gentlewake.views.PHPushlinkActivity"
             android:label="@string/app_name" >
         </activity>
 
         <!-- this broadcastreceiver listens for all intents that should trigger the synchronization service ... -->
-        <receiver android:name=".broadcastreceivers.SynchronizationReceiver" >
-            <intent-filter >
+        <receiver android:name="org.github.gentlewake.broadcastreceivers.SynchronizationReceiver" >
+            <intent-filter>
 
                 <!-- ... such as when a new alarm is set ... -->
                 <action android:name="android.intent.action.ALARM_CHANGED" />
@@ -45,16 +46,17 @@
                 <!-- ... or when the wifi state changed -->
                 <action android:name="android.net.wifi.supplicant.CONNECTION_CHANGE" />
 
-
                 <!-- ... or when the device is plugged in for charging -->
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
-                <!--<action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>-->
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <!-- <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/> -->
 
             </intent-filter>
         </receiver>
 
         <!-- this service synchronizes the alarm to the bridge -->
-        <service android:name=".services.AlarmSynchronizationService" android:label="@string/service_sync_alarm" />
+        <service
+            android:name="org.github.gentlewake.services.AlarmSynchronizationService"
+            android:label="@string/service_sync_alarm" />
 
     </application>
 

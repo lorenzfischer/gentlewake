@@ -1,8 +1,7 @@
 /* TODO: license */
-package org.github.gentlewake.activities;
+package org.github.gentlewake.views;
 
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 
 import org.github.gentlewake.R;
@@ -10,13 +9,13 @@ import org.github.gentlewake.R;
 /**
  * @author lorenz.fischer@gmail.com
  */
-public class Preferences extends PreferenceFragment {
+public class DatastorePreferences extends PreferenceFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Load the preferences from an XML resource
-        addPreferencesFromResource(R.xml.preferences);
+        // Load the datastore_preferences from an XML resource
+        addPreferencesFromResource(R.xml.datastore_preferences);
     }
 }

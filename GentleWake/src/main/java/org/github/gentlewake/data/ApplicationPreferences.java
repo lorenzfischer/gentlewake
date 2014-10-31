@@ -13,7 +13,7 @@ import org.github.gentlewake.R;
 import java.util.UUID;
 
 /**
- * This class manages all settings of the application. It stores and retrieves all values from a shared preferences
+ * This class manages all settings of the application. It stores and retrieves all values from a shared datastore_preferences
  * object.
  */
 public class ApplicationPreferences {
@@ -206,7 +206,7 @@ public class ApplicationPreferences {
     }
 
     /**
-     * Sets the schedule name in the preferences of the app.
+     * Sets the schedule name in the datastore_preferences of the app.
      *
      * @param scheduleName the new schedule name to use by the app.
      * @see #getScheduleNameOn()

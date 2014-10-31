@@ -1,5 +1,5 @@
 /* TODO: license */
-package org.github.gentlewake.activities;
+package org.github.gentlewake.views;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,14 +7,14 @@ import android.os.Bundle;
 /**
  * @author lorenz.fischer@gmail.com
  */
-public class PreferencesActivity extends Activity {
+public class DatastorePreferencesActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         getFragmentManager().beginTransaction().replace(android.R.id.content,
-                new Preferences()).commit();
+                new DatastorePreferences()).commit();
     }
 
 }

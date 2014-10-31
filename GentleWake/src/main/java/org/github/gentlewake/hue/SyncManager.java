@@ -47,7 +47,7 @@ public class SyncManager {
     /** the object that can be used to communicate with the Hue bridge. */
     private PHBridge mHueBridge;
 
-    /** a reference to the preferences object that contains all the configuration of Gentlewake. */
+    /** a reference to the datastore_preferences object that contains all the configuration of Gentlewake. */
     private ApplicationPreferences mPrefs;
 
     /**

@@ -29,7 +29,7 @@ public class AlarmSynchronizationService extends Service {
 
     private static final String TAG = "GentleWake.SyncService";
 
-    /** application preferences. */
+    /** application datastore_preferences. */
     private ApplicationPreferences mPrefs;
 
     /** A handler used to show the toast message (in the case of a successful sync) on the UI thread. */
@@ -64,7 +64,7 @@ public class AlarmSynchronizationService extends Service {
         }
 
         /*
-         * do the syncing in a background activity, as this method is run on the main thread.
+         * do the syncing in a background activity, as this method is run on the setup thread.
          * See http://developer.android.com/reference/android/app/Service.html
          */
         new AsyncTask<Void, Void, Void>() {

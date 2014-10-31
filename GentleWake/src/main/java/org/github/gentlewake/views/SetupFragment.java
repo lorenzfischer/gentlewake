@@ -1,14 +1,21 @@
-package org.github.gentlewake.activities;
+package org.github.gentlewake.views;
 
-import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.Layout;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -40,7 +47,7 @@ import java.util.regex.Pattern;
  *
  * @author SteveyO
  */
-public class MainApplicationActivity extends Activity {
+public class SetupFragment extends Fragment {
 
     private static final String TAG = "GentleWake.MainAppActy";
 
@@ -64,12 +71,6 @@ public class MainApplicationActivity extends Activity {
     /** This listener will be informed about updates to the Hue. */
     private PHSDKListener mSdkListener;
 
-    /** The button for issueing sync commands. */
-    private Button mBtnSync;
-
-    /** The button for issuing a disconnect from the bridge. */
-    private Button mDisconnectButton;
-
     //private static final int MAX_HUE = 65535;
 
     /** An object which contains global settings of the app. */
@@ -78,71 +79,64 @@ public class MainApplicationActivity extends Activity {
     /** We use this task to read from logcat. */
     private AsyncTask<Void, String, Void> mLogcatReaderTask;
 
+    /** We keep a reference to this container, so we can find views outside of the onCreateView method. */
+    private ViewGroup mContainer;  // todo: is this clean
+
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View result;
 
-        setTitle(R.string.app_name);
-        setContentView(R.layout.activity_main);
+        result = inflater.inflate(R.layout.fragment_setup, container, false);
 
+        this.mContainer = container;
         this.mDateFmt = new SimpleDateFormat();
         this.mHueSdk = PHHueSDK.create();
-        this.mPrefs = ApplicationPreferences.getInstance(this);
-        this.mTxtvLog = (TextView) findViewById(R.id.log);
-        this.mScrollvLog = (ScrollView) findViewById(R.id.scrollViewLog);
-
-        mBtnSync = (Button) findViewById(R.id.buttonSync);
-        mBtnSync.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                mSyncManager.syncAlarm(null);
-            }
-
-        });
-        mBtnSync.setEnabled(false);
-
-        mDisconnectButton = (Button) findViewById(R.id.buttonDisconnect);
-        mDisconnectButton.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                ApplicationPreferences prefs = ApplicationPreferences.getInstance(getApplicationContext());
-                prefs.setLastConnectedIPAddress(null);
-
-                // Starting home activity again (access point selection)
-                // prevent the PushLink Activity being shown when pressing the back button.
-                Intent intent = new Intent(getApplicationContext(), BridgeListActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
-                    intent.addFlags(0x8000);
-                }
-                startActivity(intent);
-
-            }
-
-        });
-        mDisconnectButton.setEnabled(false);
+        this.mPrefs = ApplicationPreferences.getInstance(getActivity());
+        this.mTxtvLog = (TextView) result.findViewById(R.id.log);
+        this.mScrollvLog = (ScrollView) result.findViewById(R.id.scrollViewLog);
 
         // ... otherwise we will update the ui as soon as we receive a bridge object
         this.mSdkListener = new DefaultPHSDKListener() {
             @Override
             public void onCacheUpdated(int i, final PHBridge bridge) {
-                mSyncManager = new SyncManager(MainApplicationActivity.this, bridge);
+                mSyncManager = new SyncManager(getActivity(), bridge);
 
-                runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mBtnSync.setEnabled(mSyncManager != null);
-                        mDisconnectButton.setEnabled(mSyncManager != null);
                         updateUi(bridge);
                     }
                 });
             }
         };
 
+        // tell the super activity that we have a menu button that we want to be shown
+        setHasOptionsMenu(true);
+
+        return result;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.w(TAG, "Inflating setup menu");
+        inflater.inflate(R.menu.setup, menu);
+    }
+
+    /**
+     * Called when option is selected.
+     *
+     * @param item the MenuItem object.
+     * @return boolean Return false to allow normal menu processing to proceed,  true to consume it here.
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.sync_alarm:
+                mSyncManager.syncAlarm(null);
+                break;
+        }
+        return true;
     }
 
     /**
@@ -161,7 +155,7 @@ public class MainApplicationActivity extends Activity {
 
             resourceCache = selectedBridge.getResourceCache();
             schedules = resourceCache.getSchedules();
-            nextAlarm = AlarmUtils.getNextAlarm(this);
+            nextAlarm = AlarmUtils.getNextAlarm(getActivity());
             hueOn = null;
             hueOff = null;
 
@@ -173,21 +167,21 @@ public class MainApplicationActivity extends Activity {
             }
 
             if (nextAlarm == null) {
-                ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText("Not Set");
+                ((TextView) mContainer.findViewById(R.id.txtvCurrentAlarm)).setText("Not Set");
             } else {
-                ((TextView) findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format(nextAlarm));
+                ((TextView) mContainer.findViewById(R.id.txtvCurrentAlarm)).setText(this.mDateFmt.format(nextAlarm));
             }
 
             if (hueOn == null) {
-                ((TextView) findViewById(R.id.txtvHueOn)).setText(R.string.txt_not_set);
+                ((TextView) mContainer.findViewById(R.id.txtvHueOn)).setText(R.string.txt_not_set);
             } else {
-                ((TextView) findViewById(R.id.txtvHueOn)).setText(this.mDateFmt.format(hueOn.getDate()));
+                ((TextView) mContainer.findViewById(R.id.txtvHueOn)).setText(this.mDateFmt.format(hueOn.getDate()));
             }
 
             if (hueOff == null) {
-                ((TextView) findViewById(R.id.txtvHueOff)).setText(R.string.txt_not_set);
+                ((TextView) mContainer.findViewById(R.id.txtvHueOff)).setText(R.string.txt_not_set);
             } else {
-                ((TextView) findViewById(R.id.txtvHueOff)).setText(this.mDateFmt.format(hueOff.getDate()));
+                ((TextView) mContainer.findViewById(R.id.txtvHueOff)).setText(this.mDateFmt.format(hueOff.getDate()));
             }
         }
     }
@@ -227,8 +221,8 @@ public class MainApplicationActivity extends Activity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
 
         PHBridge selectedBridge;
         this.mHueSdk.getNotificationManager().registerSDKListener(this.mSdkListener);
@@ -236,9 +230,7 @@ public class MainApplicationActivity extends Activity {
         // test to see if we have a connection to the bridge already
         selectedBridge = this.mHueSdk.getSelectedBridge();
         if (selectedBridge != null) {
-            this.mSyncManager = new SyncManager(this, selectedBridge);  // the sync-button relies on this
-            mBtnSync.setEnabled(this.mSyncManager != null);
-            mDisconnectButton.setEnabled(this.mSyncManager != null);
+            this.mSyncManager = new SyncManager(getActivity(), selectedBridge);  // the sync-button relies on this
             updateUi(selectedBridge);                 // show current alarm and hue configuration in ui
         }
 
@@ -293,14 +285,14 @@ public class MainApplicationActivity extends Activity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    public void onPause() {
+        super.onPause();
         this.mHueSdk.getNotificationManager().unregisterSDKListener(this.mSdkListener);
         mLogcatReaderTask.cancel(true);
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
 
         PHBridge bridge = mHueSdk.getSelectedBridge();

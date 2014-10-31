@@ -1,13 +1,18 @@
-package org.github.gentlewake.activities;
+package org.github.gentlewake.views;
 
-import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
@@ -40,37 +45,39 @@ import java.util.List;
  * @author SteveyO
  *
  */
-public class BridgeListActivity extends Activity implements OnItemClickListener {
+public class BridgeListFragment extends Fragment implements OnItemClickListener {
 
     private PHHueSDK mHueSdk;
     public static final String TAG = "GentleWake.ListActy";
     private ApplicationPreferences mPrefs;
     private AccessPointListAdapter adapter;
-    
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.bridgelistlinear);
 
-        mPrefs = ApplicationPreferences.getInstance(this);
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View result;
+
+        mPrefs = ApplicationPreferences.getInstance(getActivity());
 
         // Gets an instance of the Hue SDK.
         mHueSdk = PHHueSDK.create();
-        
+
         // Set the Device Name (name of your app). This will be stored in your bridge whitelist entry.
         mHueSdk.setDeviceName(mPrefs.getBridgeDeviceName());
 
         // Register the PHSDKListener to receive callbacks from the bridge.
         mHueSdk.getNotificationManager().registerSDKListener(listener);
-        
-        adapter = new AccessPointListAdapter(getApplicationContext(), mHueSdk.getAccessPointsFound());
-        
-        ListView accessPointList = (ListView) findViewById(R.id.bridge_list);
+
+        adapter = new AccessPointListAdapter(getActivity(), mHueSdk.getAccessPointsFound());
+
+        result = inflater.inflate(R.layout.fragment_bridgelist, container, false);
+
+        ListView accessPointList = (ListView) result.findViewById(R.id.bridge_list);
         accessPointList.setOnItemClickListener(this);
         accessPointList.setAdapter(adapter);
-        
+
         // Try to automatically connect to the last known bridge.  For first time use this will be empty so a bridge search is automatically started.
-        mPrefs = ApplicationPreferences.getInstance(getApplicationContext());
+        mPrefs = ApplicationPreferences.getInstance(getActivity());
         String lastIpAddress   = mPrefs.getLastConnectedIPAddress();
         String lastUsername    = mPrefs.getUsername();
 
@@ -79,25 +86,43 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
             PHAccessPoint lastAccessPoint = new PHAccessPoint();
             lastAccessPoint.setIpAddress(lastIpAddress);
             lastAccessPoint.setUsername(lastUsername);
-           
+
             if (!mHueSdk.isAccessPointConnected(lastAccessPoint)) {
-               PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, BridgeListActivity.this);
-               mHueSdk.connect(lastAccessPoint);
+                PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, getActivity());
+                mHueSdk.connect(lastAccessPoint);
             }
         }
         else {  // First time use, so perform a bridge search.
             doBridgeSearch();
         }
+
+        setHasOptionsMenu(true); // tell the super activity that we have a menu button that we want to be shown
+
+        return result;
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        Log.w(TAG, "Inflating home menu");
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.w(TAG, "Inflating bridgelist menu");
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.home, menu);
-        return true;
+        inflater.inflate(R.menu.bridgelist, menu);
     }
 
+    /**
+     * Called when option is selected.
+     *
+     * @param item the MenuItem object.
+     * @return boolean Return false to allow normal menu processing to proceed,  true to consume it here.
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.find_new_bridge:
+                doBridgeSearch();
+                break;
+        }
+        return true;
+    }
 
     // Local SDK Listener
     private PHSDKListener listener = new PHSDKListener() {
@@ -111,17 +136,17 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
                     mHueSdk.getAccessPointsFound().clear();
                     mHueSdk.getAccessPointsFound().addAll(accessPoint);
 
-                    runOnUiThread(new Runnable() {
+                    getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             adapter.updateData(mHueSdk.getAccessPointsFound());
-                       }
-                   });
+                        }
+                    });
                    
             } else {
                 // FallBack Mechanism.  If a UPNP Search returns no results then perform an IP Scan. Of course it could fail as the user has disconnected their bridge, connected to a wrong network or disabled Network Discovery on their router so it is not guaranteed to work.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                    PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, BridgeListActivity.this);
+                    PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, getActivity());
                     PHBridgeSearchManager sm = (PHBridgeSearchManager) mHueSdk.getSDKService(PHHueSDK.SEARCH_BRIDGE);
                     // Start the IP Scan Search if the UPNP and NPNP return 0 results.
                     sm.search(false, false, true);
@@ -144,20 +169,20 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
             mPrefs.setLastConnectedIPAddress(b.getResourceCache().getBridgeConfiguration().getIpAddress());
             mPrefs.setUsername(mPrefs.getUsername());
             PHWizardAlertDialog.getInstance().closeProgressDialog();     
-            startMainActivity();
+            showSetupFragment();
         }
 
         @Override
         public void onAuthenticationRequired(PHAccessPoint accessPoint) {
             Log.w(TAG, "Authentication Required.");
             mHueSdk.startPushlinkAuthentication(accessPoint);
-            startActivity(new Intent(BridgeListActivity.this, PHPushlinkActivity.class));
+            startActivity(new Intent(getActivity(), PHPushlinkActivity.class));
            
         }
 
         @Override
         public void onConnectionResumed(PHBridge bridge) {
-            if (BridgeListActivity.this.isFinishing())
+            if (BridgeListFragment.this.isRemoving()) // todo: this was Activity.isFinishing().. is this the correct replacement?
                 return;
             
             Log.v(TAG, "onConnectionResumed on ip " + bridge.getResourceCache().getBridgeConfiguration().getIpAddress());
@@ -192,10 +217,10 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
             else if (code == PHHueError.BRIDGE_NOT_RESPONDING) {
                 Log.w(TAG, "Bridge Not Responding . . . ");
                 PHWizardAlertDialog.getInstance().closeProgressDialog();
-                BridgeListActivity.this.runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PHWizardAlertDialog.showErrorDialog(BridgeListActivity.this, message, R.string.btn_ok);
+                        PHWizardAlertDialog.showErrorDialog(getActivity(), message, R.string.btn_ok);
                     }
                 }); 
 
@@ -203,33 +228,17 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
             else if (code == PHMessageType.BRIDGE_NOT_FOUND) {
                 PHWizardAlertDialog.getInstance().closeProgressDialog();
 
-                BridgeListActivity.this.runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PHWizardAlertDialog.showErrorDialog(BridgeListActivity.this, message, R.string.btn_ok);
+                        PHWizardAlertDialog.showErrorDialog(getActivity(), message, R.string.btn_ok);
                     }
                 });                
             }
         }
     };
 
-    /**
-     * Called when option is selected.
-     * 
-     * @param item the MenuItem object.
-     * @return boolean Return false to allow normal menu processing to proceed,  true to consume it here.
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case R.id.find_new_bridge:
-            doBridgeSearch();
-            break;
-        }
-        return true;
-    }
 
-    
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -243,7 +252,7 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        ApplicationPreferences prefs = ApplicationPreferences.getInstance(getApplicationContext());
+        ApplicationPreferences prefs = ApplicationPreferences.getInstance(getActivity());
         PHAccessPoint accessPoint = (PHAccessPoint) adapter.getItem(position);
         accessPoint.setUsername(prefs.getUsername());
         
@@ -256,25 +265,29 @@ public class BridgeListActivity extends Activity implements OnItemClickListener 
                 mHueSdk.disconnect(connectedBridge);
             }
         }
-        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, BridgeListActivity.this);
+        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.connecting, getActivity());
         mHueSdk.connect(accessPoint);
     }
     
     public void doBridgeSearch() {
-        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, BridgeListActivity.this);
+        PHWizardAlertDialog.getInstance().showProgressDialog(R.string.search_progress, getActivity());
         PHBridgeSearchManager sm = (PHBridgeSearchManager) mHueSdk.getSDKService(PHHueSDK.SEARCH_BRIDGE);
         // Start the UPNP Searching of local bridges.
         sm.search(true, true);
     }
     
-    // Starting the main activity this way, prevents the PushLink Activity being shown when pressing the back button.
-    public void startMainActivity() {   
-        Intent intent = new Intent(getApplicationContext(), MainApplicationActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-            intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
-        startActivity(intent);
+    // Starting the setup activity this way, prevents the PushLink Activity being shown when pressing the back button.
+    public void showSetupFragment() {
+        FragmentTransaction transaction;
+
+        transaction = getFragmentManager().beginTransaction();
+        // Replace whatever is in the fragment_container view with this fragment,
+        // and add the transaction to the back stack so the user can navigate back
+        transaction.replace(R.id.fragment_container, new SetupFragment());
+        transaction.addToBackStack(null);
+
+        // Commit the transaction
+        transaction.commit();
     }
     
 }
