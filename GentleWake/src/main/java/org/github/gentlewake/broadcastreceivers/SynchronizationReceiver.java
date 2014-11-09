@@ -20,7 +20,7 @@ import org.github.gentlewake.services.AlarmSynchronizationService;
  */
 public class SynchronizationReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "GentleWake.SyncReceiver";
+    public static final String TAG = "GentleWake.SyncReceiver";
 
 
     @Override
@@ -29,8 +29,8 @@ public class SynchronizationReceiver extends BroadcastReceiver {
 
         if (WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION.equals(intent.getAction())) {
             if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false) == true) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "A wifi connection has just been established");
+                if (Log.isLoggable(TAG, Log.INFO)) {
+                    Log.i(TAG, "WiFi connection detected");
                 }
                 doSync = true;
 
@@ -45,8 +45,8 @@ public class SynchronizationReceiver extends BroadcastReceiver {
             ConnectivityManager connManager;
             NetworkInfo mWifi;
 
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "We received an intent that tells us to do alarm syncing. Checking for a WiFi connection..");
+            if (Log.isLoggable(TAG, Log.INFO)) {
+                Log.i(TAG, "Sync intent received");
             }
 
             connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -54,12 +54,12 @@ public class SynchronizationReceiver extends BroadcastReceiver {
 
             if (mWifi.isConnected()) {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Wifi is connected.");
+                    Log.d(TAG, "WiFi is connected.");
                 }
                 doSync = true;
             } else {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Wifi not connected.");
+                    Log.d(TAG, "WiFi not connected.");
                 }
             }
         }

@@ -27,6 +27,7 @@ import com.philips.lighting.model.PHBridgeResourcesCache;
 import com.philips.lighting.model.PHSchedule;
 
 import org.github.gentlewake.R;
+import org.github.gentlewake.broadcastreceivers.SynchronizationReceiver;
 import org.github.gentlewake.data.ApplicationPreferences;
 import org.github.gentlewake.hue.DefaultPHSDKListener;
 import org.github.gentlewake.util.AlarmUtils;
@@ -49,7 +50,7 @@ import java.util.regex.Pattern;
  */
 public class SetupFragment extends Fragment {
 
-    private static final String TAG = "GentleWake.MainAppActy";
+    private static final String TAG = "GentleWake.SetupFgmt";
 
     /** The maximum number of lines that should be shown in the message log text field. */
     public static final int MAX_LOG_LINES = 50;
@@ -119,7 +120,9 @@ public class SetupFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Log.w(TAG, "Inflating setup menu");
+        if (Log.isLoggable(TAG, Log.VERBOSE)) {
+            Log.v(TAG, "Inflating setup menu");
+        }
         inflater.inflate(R.menu.setup, menu);
     }
 
@@ -239,15 +242,21 @@ public class SetupFragment extends Fragment {
             mLogcatReaderTask.cancel(true);
         }
         mLogcatReaderTask = new AsyncTask<Void, String, Void>() {
-            private Pattern pattern = Pattern.compile("“");
-
+            private static final String PATTERN = "^[^\\s]+\\s([0-9][0-9]:[0-9][0-9]:[0-9][0-9])[^:]+:\\s(.*)$";
             @Override
             protected Void doInBackground(Void... args) {
                 Process process;
                 BufferedReader reader;
 
                 try {
-                    process = Runtime.getRuntime().exec("logcat -v time "+SyncManager.TAG+":D *:S");
+                    // http://developer.android.com/tools/debugging/debugging-log.html#outputFormat
+                    // logcat -v time GentleWake.SyncManager:D GentleWake.SyncReceiver:D *:W | grep GentleWake
+                    // todo: replace the "GentleWake" string
+                    process = Runtime.getRuntime().exec("logcat -v time "+  // show the "time format"
+                            SyncManager.TAG+":D "+                          // debug for the sync manager
+                            SynchronizationReceiver.TAG+":D "+              // debug for the sync receiver
+                            "*:E "+                                         // show all errors
+                            "| grep GentleWake");                           // ... for TAGs containing "GentleWake"
                     reader = new BufferedReader(
                             new InputStreamReader(process.getInputStream()));
 
@@ -259,14 +268,17 @@ public class SetupFragment extends Fragment {
                             // try again in 2 seconds
                             Thread.sleep(2 * 1000);
                         } else {
-                            // the log line contains way too much information, strip away some of it.
+                            /* The log line contains way too much information. Example:
+                               11-09 16:28:31.996 I/GentleWake.SyncManager(19703): Syncing alarms
+                             */
+                            line = line.replaceAll(PATTERN, "$1: $2");
 
                             publishProgress(line);
                         }
                     }
                 } catch (IOException e) {
                     // post the exception to the log
-                    publishProgress(e.getMessage());
+                    publishProgress("Error while reading logcat: " + e.getMessage());
                 } catch (InterruptedException e) {
                     // this happens if this object gets killed while we're waiting.
                     publishProgress("Exiting");

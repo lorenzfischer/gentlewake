@@ -8,5 +8,5 @@ adb shell setprop  log.tag.GentleWake.SyncReceiver   DEBUG
 adb shell setprop  log.tag.GentleWake.SyncManager    DEBUG
 adb shell setprop  log.tag.GentleWake.SyncService    DEBUG
 
-adb shell setprop  log.tag.GentleWake.ListActy       DEBUG
+adb shell setprop  log.tag.GentleWake.ListFragment   DEBUG
 adb shell setprop  log.tag.GentleWake.MainAppActy    DEBUG

@@ -51,6 +51,7 @@ public class AlarmSynchronizationService extends Service {
 
         if (mSdk.getSelectedBridge() != null) {
             // disconnect again
+            mSdk.disableHeartbeat(mSdk.getSelectedBridge());
             mSdk.disconnect(mSdk.getSelectedBridge());
         }
 
@@ -60,7 +61,7 @@ public class AlarmSynchronizationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, final int startId) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "starting sync service");
+            Log.d(TAG, "Starting sync service");
         }
 
         /*
