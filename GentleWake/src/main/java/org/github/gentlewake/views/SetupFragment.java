@@ -115,6 +115,9 @@ public class SetupFragment extends Fragment {
         // tell the super activity that we have a menu button that we want to be shown
         setHasOptionsMenu(true);
 
+        // tmp
+        logMessage(android.os.Build.MODEL);
+
         return result;
     }
 
@@ -307,14 +310,16 @@ public class SetupFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        PHBridge bridge = mHueSdk.getSelectedBridge();
-        if (bridge != null) {
+        if (mHueSdk != null) {  // I have not yet found out how this is possible
+            PHBridge bridge = mHueSdk.getSelectedBridge();
+            if (bridge != null) {
 
-            if (mHueSdk.isHeartbeatEnabled(bridge)) {
-                mHueSdk.disableHeartbeat(bridge);
+                if (mHueSdk.isHeartbeatEnabled(bridge)) {
+                    mHueSdk.disableHeartbeat(bridge);
+                }
+
+                mHueSdk.disconnect(bridge);
             }
-
-            mHueSdk.disconnect(bridge);
         }
     }
 }

@@ -34,23 +34,55 @@
     android:title="@string/pref_title_datastore"
     android:key="pref_key_datastore">
 
+    <EditTextPreference
+    android:title="Username"
+    android:summary="The username we use to connect to the bridge."
+    android:key="@string/pref_key_username"/>
 
+    <EditTextPreference
+        android:title="Bridge IP"
+        android:summary="The IP address of the bridge we connected to the last time."
+        android:key="@string/pref_key_bridge_ip"/>
 
-    <CheckBoxPreference
-        android:key="pref_key_auto_delete"
-        android:summary="deletes messages"
-        android:title="delete messages"
-        android:defaultValue="false" />
-    <Preference
-        android:key="pref_key_sms_delete_limit"
-        android:dependency="pref_key_auto_delete"
-        android:summary="how many sms"
-        android:title="should we delete" />
-    <Preference
-        android:key="pref_key_mms_delete_limit"
-        android:dependency="pref_key_auto_delete"
-        android:summary="how many mms"
-        android:title="should we delete" />
+    <EditTextPreference
+        android:title="Light Group"
+        android:summary="The name of the light group we use for the schedule."
+        android:key="@string/pref_key_light_group"/>
+
+    <EditTextPreference
+        android:title="Schedule On"
+        android:summary="The id of the schedule that turns the lights on."
+        android:key="@string/pref_key_schedule_on"/>
+
+    <EditTextPreference
+        android:title="Schedule Brighten"
+        android:summary="The id of the schedule that increases the brightness."
+        android:key="@string/pref_key_schedule_brighten"/>
+
+    <EditTextPreference
+        android:title="Schedule Off"
+        android:summary="The id of the schedule that turns the lights off again."
+        android:key="@string/pref_key_schedule_off"/>
+
+    <EditTextPreference
+        android:title="Transition Minutes"
+        android:inputType="number"
+        android:key="@string/pref_key_transition_minutes" />
+    <!--android:summary="The number of minutes the light takes to transition from simply on to full brightness."-->
+    <!--<CheckBoxPreference-->
+        <!--android:key="pref_key_auto_delete"-->
+        <!--android:summary="deletes messages"-->
+        <!--android:title="delete messages"-->
+        <!--android:defaultValue="false" />-->
+    <!--<Preference-->
+        <!--android:key="pref_key_sms_delete_limit"-->
+        <!--android:dependency="pref_key_auto_delete"-->
+        <!--android:summary="how many sms"-->
+        <!--android:title="should we delete" />-->
+    <!--<Preference-->
+        <!--android:key="pref_key_mms_delete_limit"-->
+        <!--android:dependency="pref_key_auto_delete"-->
+        <!--android:summary="how many mms"-->
+        <!--android:title="should we delete" />-->
 </PreferenceCategory>
-...
 </PreferenceScreen>

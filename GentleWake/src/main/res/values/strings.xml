@@ -6,10 +6,6 @@
     <string name="title_bridge_list">Select Bridge</string>
     <string name="title_setup">Setup Alarm Sync</string>
 
-    <string name="action_settings">Settings</string>
-    <string name="pref_bridge_config">Connection to Hue Bridge</string>
-    <string name="pref_ip_address">IP Address</string>
-    <string name="pref_ip_address_summary">The IP address of your Hue Bridge</string>
 
     <!-- quickstart app -->
     <string name="no_bridge">No Bridge Found.   Start Bridge Search</string>
@@ -49,5 +45,20 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_example">Example action</string>
+
+    <!-- preferences keys -->
+    <string name="action_settings">Settings</string>
+    <string name="pref_bridge_config">Connection to Hue Bridge</string>
+    <string name="pref_ip_address">IP Address</string>
+    <string name="pref_ip_address_summary">The IP address of your Hue Bridge</string>
+
+    <string name="pref_key_device_name">pref_key_device_name</string>
+    <string name="pref_key_username">pref_key_username</string>
+    <string name="pref_key_bridge_ip">pref_key_bridge_ip</string>
+    <string name="pref_key_light_group">pref_key_light_group</string>
+    <string name="pref_key_schedule_on">pref_key_scheduler_on</string>
+    <string name="pref_key_schedule_brighten">pref_key_scheduler_brighten</string>
+    <string name="pref_key_schedule_off">pref_key_scheduler_off</string>
+    <string name="pref_key_transition_minutes">pref_key_transition_minutes</string>
 
 </resources>
