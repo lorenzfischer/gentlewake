@@ -345,6 +345,7 @@ public class SyncManager {
                                       final ValueCallback<String> messageCallback,
                                       final ValueCallback<PHSchedule> scheduleCallback) {
         final PHSchedule schedule;
+        boolean needToCreateNewSchedule;
 
         if (scheduleId != null) {
             schedule = this.mHueBridge.getResourceCache().getSchedules().get(scheduleId);
@@ -352,16 +353,32 @@ public class SyncManager {
             schedule = null;
         }
 
-        if (schedule == null || !schedule.getName().equals(scheduleName)) {
+        needToCreateNewSchedule = false;
+
+        if (schedule == null) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Schedule with id '" + scheduleId + "' and name '" +
-                        scheduleName + "' did not exist. Creating a new one...");
+                Log.d(TAG, "Schedule with id '" + scheduleId + "' did not exist.");
+            }
+            needToCreateNewSchedule = true;
+        } else if (!schedule.getDescription().contains(mPrefs.getBridgeDeviceName())) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "The description of the schedule with id '" + scheduleId + "' did not contain the " +
+                        "device name '" + mPrefs.getBridgeDeviceName() + "'.");
+            }
+            needToCreateNewSchedule = true;
+        }
+
+
+        if (needToCreateNewSchedule) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "Creating a new schedule with name '" + scheduleName + "' ...");
             }
             final PHSchedule newSchedule;
 
             newSchedule = new PHSchedule(scheduleName);
             newSchedule.setGroupIdentifier(lightGroupName);
-            newSchedule.setDescription(this.mCtx.getString(R.string.schedule_description));
+            newSchedule.setDescription("Schedule of: "  // this is a hack because I cannot otherwise uniquely
+                    + mPrefs.getBridgeDeviceName());    // identify the schedules that belong to a given device.
             newSchedule.setLightState(lightState);
             newSchedule.setDate(scheduleDate);
 

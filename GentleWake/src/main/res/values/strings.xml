@@ -39,7 +39,6 @@
     <string name="service_sync_alarm">Alarm Synchronization Service</string>
 
     <!-- schedule sync -->
-    <string name="schedule_description">This schedule is used by the Gentlewake application.</string>
     <string name="pref_title_datastore">Datastore</string>
     <string name="title_activity_main">Gentlewake</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
@@ -56,9 +55,13 @@
     <string name="pref_key_username">pref_key_username</string>
     <string name="pref_key_bridge_ip">pref_key_bridge_ip</string>
     <string name="pref_key_light_group">pref_key_light_group</string>
-    <string name="pref_key_schedule_on">pref_key_scheduler_on</string>
-    <string name="pref_key_schedule_brighten">pref_key_scheduler_brighten</string>
-    <string name="pref_key_schedule_off">pref_key_scheduler_off</string>
+    <string name="pref_key_schedule_name_brighten">pref_key_schedule_name_brighten</string>
+    <string name="pref_key_schedule_name_off">pref_key_schedule_name_off</string>
+    <string name="pref_key_schedule_name_on">pref_key_schedule_name_on</string>
+    <string name="pref_key_schedule_id_on">pref_key_scheduler_id_on</string>
+    <string name="pref_key_schedule_id_brighten">pref_key_scheduler_id_brighten</string>
+    <string name="pref_key_schedule_id_off">pref_key_scheduler_id_off</string>
+
     <string name="pref_key_transition_minutes">pref_key_transition_minutes</string>
 
 </resources>

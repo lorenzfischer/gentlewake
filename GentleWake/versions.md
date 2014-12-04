@@ -1,6 +1,7 @@
 Revision History
 ================
 Version-Code    Version-Name    Change-Log
+8               "3.0.1"         - check id and name of schedule before deciding to update one's "own" schedule
 7               "3.0.0"         - new navigation drawer layout
 6               "2.0.0"         - Major overhaul regarding the message log
 5               "1.1.2"         - Prevent NullPointerExceptions in the UI, when the "selected bridge" is null.

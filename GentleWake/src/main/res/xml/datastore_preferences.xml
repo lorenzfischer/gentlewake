@@ -50,19 +50,34 @@
         android:key="@string/pref_key_light_group"/>
 
     <EditTextPreference
-        android:title="Schedule On"
-        android:summary="The id of the schedule that turns the lights on."
-        android:key="@string/pref_key_schedule_on"/>
+        android:title="Schedule Name On"
+        android:summary="The name of the schedule that turns the lights on."
+        android:key="@string/pref_key_schedule_name_on"/>
 
     <EditTextPreference
-        android:title="Schedule Brighten"
-        android:summary="The id of the schedule that increases the brightness."
-        android:key="@string/pref_key_schedule_brighten"/>
+        android:title="Schedule Name Brighten"
+        android:summary="The name of the schedule that increases the brightness."
+        android:key="@string/pref_key_schedule_name_brighten"/>
 
     <EditTextPreference
-        android:title="Schedule Off"
-        android:summary="The id of the schedule that turns the lights off again."
-        android:key="@string/pref_key_schedule_off"/>
+        android:title="Schedule Name Off"
+        android:summary="The name of the schedule that turns the lights off again."
+        android:key="@string/pref_key_schedule_name_off"/>
+
+    <EditTextPreference
+        android:title="Schedule ID On"
+        android:summary="The ID of the schedule that turns the lights on."
+        android:key="@string/pref_key_schedule_id_on"/>
+
+    <EditTextPreference
+        android:title="Schedule ID Brighten"
+        android:summary="The ID of the schedule that increases the brightness."
+        android:key="@string/pref_key_schedule_id_brighten"/>
+
+    <EditTextPreference
+        android:title="Schedule ID Off"
+        android:summary="The ID of the schedule that turns the lights off again."
+        android:key="@string/pref_key_schedule_id_off"/>
 
     <EditTextPreference
         android:title="Transition Minutes"

@@ -5,11 +5,11 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 
 import com.philips.lighting.hue.sdk.connection.impl.PHBridgeInternal;
 
 import org.github.gentlewake.R;
+import org.github.gentlewake.util.Utils;
 
 /**
  * This class manages all settings of the application. It stores and retrieves all values from a shared datastore_preferences
@@ -140,21 +140,21 @@ public class ApplicationPreferences {
      * @return the id that should be used for the schedule turning the Hue lights on.
      */
     public String getScheduleIdOn() {
-        return mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_on), null);
+        return mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_id_on), null);
     }
 
     /**
      * @return the id that should be used for the schedule that increases the brightness of the hue lights.
      */
     public String getScheduleIdBrighten() {
-        return mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_brighten), null);
+        return mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_id_brighten), null);
     }
 
     /**
      * @return the id that should be used for the schedule turning the Hue lights off.
      */
     public String getScheduleIdOff() {
-        return mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_off), null);
+        return mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_id_off), null);
     }
 
     /**
@@ -163,7 +163,7 @@ public class ApplicationPreferences {
      * @param scheduleId the new schedule id to use by the app.
      */
     public void setScheduleIdOn(String scheduleId) {
-        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_on), scheduleId);
+        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_id_on), scheduleId);
         mSharedPreferencesEditor.apply();
     }
 
@@ -173,7 +173,7 @@ public class ApplicationPreferences {
      * @param scheduleId the new schedule id to use by the app.
      */
     public void setScheduleIdBrighten(String scheduleId) {
-        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_brighten), scheduleId);
+        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_id_brighten), scheduleId);
         mSharedPreferencesEditor.apply();
     }
 
@@ -183,7 +183,7 @@ public class ApplicationPreferences {
      * @param scheduleId the new schedule id to use by the app.
      */
     public void setScheduleIdOff(String scheduleId) {
-        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_off), scheduleId);
+        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_id_off), scheduleId);
         mSharedPreferencesEditor.apply();
     }
 
@@ -198,21 +198,60 @@ public class ApplicationPreferences {
      * @return the name that should be used for the schedule turning the Hue lights on.
      */
     public String getScheduleNameOn() {
-        return getBaseScheduleName() + " On";
+        String result;
+
+        result = mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_name_on), null);
+        if (result == null) {
+            result = getBaseScheduleName() + " On";
+            setScheduleNameOn(result);
+        }
+
+        return result;
+    }
+
+    public void setScheduleNameOn(String scheduleNameOn) {
+        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_name_on), scheduleNameOn);
+        mSharedPreferencesEditor.apply();
     }
 
     /**
      * @return the name that should be used for the schedule that increases the brightness of the hue lights.
      */
     public String getScheduleNameBrighten() {
-        return getBaseScheduleName() + " Brighten";
+        String result;
+
+        result = mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_name_brighten), null);
+        if (result == null) {
+            result = getBaseScheduleName() + " Brighten";
+            setScheduleNameBrighten(result);
+        }
+
+        return result;
+    }
+
+    public void setScheduleNameBrighten(String scheduleNameBrighten) {
+        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_name_brighten), scheduleNameBrighten);
+        mSharedPreferencesEditor.apply();
     }
 
     /**
      * @return the name that should be used for the schedule turning the Hue lights off.
      */
     public String getScheduleNameOff() {
-        return getBaseScheduleName() + " Off";
+        String result;
+
+        result = mSharedPreferences.getString(mCtx.getString(R.string.pref_key_schedule_name_off), null);
+        if (result == null) {
+            result = getBaseScheduleName() + " Off";
+            setScheduleNameOff(result);
+        }
+
+        return result;
+    }
+
+    public void setScheduleNameOff(String scheduleNameOff) {
+        mSharedPreferencesEditor.putString(mCtx.getString(R.string.pref_key_schedule_name_off), scheduleNameOff);
+        mSharedPreferencesEditor.apply();
     }
 
     /**
