@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.philips.lighting.hue.listener.PHGroupListener;
 import com.philips.lighting.hue.sdk.PHHueSDK;
+import com.philips.lighting.hue.sdk.connection.impl.PHBridgeInternal;
 import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHBridgeResourcesCache;
 import com.philips.lighting.model.PHGroup;
@@ -25,6 +26,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Random;
 
 /**
  * This class deals with setting the schedules to sync the alarm of the phone with the Hue system. In each
@@ -350,11 +352,11 @@ public class SyncManager {
             schedule = null;
         }
 
-        if (schedule == null) {
+        if (schedule == null || !schedule.getName().equals(scheduleName)) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Schedule with id '" + scheduleId + "' did not exist. Creating it...");
+                Log.d(TAG, "Schedule with id '" + scheduleId + "' and name '" +
+                        scheduleName + "' did not exist. Creating a new one...");
             }
-
             final PHSchedule newSchedule;
 
             newSchedule = new PHSchedule(scheduleName);

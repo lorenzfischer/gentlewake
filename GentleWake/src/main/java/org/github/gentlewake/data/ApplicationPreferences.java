@@ -78,7 +78,7 @@ public class ApplicationPreferences {
         result = mSharedPreferences.getString(mCtx.getString(R.string.pref_key_device_name), null);
         if (result == null) {
             // don't put a space or an underscore.. I don't know why, but this causes trouble when connecting.
-            result = mCtx.getString(R.string.app_name) + "-" + PHBridgeInternal.generateUniqueKey();
+            result = mCtx.getString(R.string.app_name) + "-" + PHBridgeInternal.generateDeviceId();
             setBridgeDeviceName(result);
         }
 
