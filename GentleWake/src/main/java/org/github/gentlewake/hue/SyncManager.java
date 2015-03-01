@@ -263,9 +263,18 @@ public class SyncManager {
                 );
 
             } else { // there is no alarm scheduled, so we have to remove all hue schedules for this phone
-                removeSchedule(scheduleIdOn, messageCallback);
-                removeSchedule(scheduleIdBrighten, messageCallback);
-                removeSchedule(scheduleIdOff, messageCallback);
+                if (scheduleIdOn != null) {
+                    removeSchedule(scheduleIdOn, messageCallback);
+                }
+                if (scheduleIdBrighten != null) {
+                    removeSchedule(scheduleIdBrighten, messageCallback);
+                }
+                if (scheduleIdBrighten != null) {
+                    removeSchedule(scheduleIdBrighten, messageCallback);
+                }
+                if (scheduleIdOff != null) {
+                    removeSchedule(scheduleIdOff, messageCallback);
+                }
             }
         }
     }
@@ -277,6 +286,10 @@ public class SyncManager {
      * @param messageCallback this callback will be called with a message about the removed schedule.
      */
     private void removeSchedule(final String scheduleId, final ValueCallback<String> messageCallback) {
+
+        if (scheduleId == null) {
+            throw new RuntimeException("The id of the schedule to be removed cannot be null.");
+        }
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "Removing schedule with identifier " + scheduleId);

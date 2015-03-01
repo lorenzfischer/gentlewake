@@ -42,7 +42,7 @@ public class AlarmUtils {
          * The code for this has been copied and adapted from
          * http://stackoverflow.com/questions/8133788/time-to-the-next-alarm-in-seconds-or-milliseconds
          */
-        if (nextAlarm.length() > 0) {
+        if (nextAlarm != null && nextAlarm.length() > 0) {
             DateFormat sdf;
             Date alarmDate;
 

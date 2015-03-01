@@ -40,7 +40,10 @@
         <receiver android:name="org.github.gentlewake.broadcastreceivers.SynchronizationReceiver" >
             <intent-filter>
 
-                <!-- ... such as when a new alarm is set ... -->
+                <!-- ... such as when a new alarm is set ...
+                     This stopped working, maybe it's du to the this intent being some sort of "private" intent?
+                     http://stackoverflow.com/questions/18201666/alarm-clock-from-git-gives-error-android
+                 -->
                 <action android:name="android.intent.action.ALARM_CHANGED" />
 
                 <!-- ... or when the wifi state changed -->

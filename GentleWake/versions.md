@@ -1,6 +1,7 @@
 Revision History
 ================
 Version-Code    Version-Name    Change-Log
+9               "3.0.2"         - don't crash if no alarm is set
 8               "3.0.1"         - check id and name of schedule before deciding to update one's "own" schedule
 7               "3.0.0"         - new navigation drawer layout
 6               "2.0.0"         - Major overhaul regarding the message log
